@@ -261,6 +261,14 @@ class Builder:
 			self.ark2d_dir = config["windows"]['ark2d_dir'];
 			self.ark2d_tmpdir = "C:\\a2dwpvs\\l";
 
+		elif (self.platform=="windows-store"):
+			self.src_files.extend(config['src_files']['windows-store']);
+			#self.dll_files.extend(config['dynamic_libraries']['windows']);
+			#self.static_libraries.extend(config['static_libraries']['windows']);
+
+			self.ark2d_dir = config["windows"]['ark2d_dir'];
+			self.ark2d_tmpdir = "D:\\a2dws10vs\\l";
+
 		elif (self.platform == "osx"):
 
 			self.build_artifact = self.build_folder + self.ds + self.platform + self.ds + "libARK2D.dylib";
@@ -997,6 +1005,36 @@ class Builder:
 		print("Building for Current Platform (" + self.platform + ")");
 
 		if (self.building_library):
+			self.doVSDllTemplate("windows-store");
+
+			# copy pch.h file/s
+			output_folder = self.ark2d_dir + "/build/windows-store";# + self.output;
+			print("Write pch.cpp file...");
+			f1 = open(self.ark2d_dir + "/lib/windows-store/dll-template/pch.cpp", "r");
+			pch_cpp_contents = f1.read();
+			f1.close();
+			f1 = open(output_folder + "/pch.cpp", "w");
+			f1.write(pch_cpp_contents);
+			f1.close();
+
+			# copy pch.h file/s
+			print("Write pch.h file...");
+			f1 = open(self.ark2d_dir + "/lib/windows-store/dll-template/pch.h", "r");
+			pch_h_contents = f1.read();
+			f1.close();
+			f1 = open(output_folder + "/pch.h", "w");
+			f1.write(pch_h_contents);
+			f1.close();
+
+			# copy target versionh file/s
+			print("Write targetver.h file...");
+			f1 = open(self.ark2d_dir + "/lib/windows-store/dll-template/targetver.h", "r");
+			targetver_h_contents = f1.read();
+			f1.close();
+			f1 = open(output_folder + "/targetver.h", "w");
+			f1.write(targetver_h_contents);
+			f1.close();
+
 			pass;
 		else:
 			print("Cannot build games for Windows Store yet.");
@@ -1072,6 +1110,73 @@ class Builder:
 			f1.write(vcxproj_contents);
 			f1.close();
 
+	def doVSDllTemplate(self, folderName):
+		# output directory
+		output_folder = self.ark2d_dir + "/build/" + folderName;# + self.output;
+		print("out folder: " + output_folder);
+
+		# make directories
+		mkdirs = [];
+		mkdirs.extend(self.mkdirs);
+		util.makeDirectories(mkdirs);
+
+		sln_contents = ""; ####
+		vcxproj_contents = "";
+
+		# dll sln and vcxproj files
+		print self.ark2d_dir;
+		f1 = open(self.ark2d_dir + "/lib/"+folderName+"/dll-template/dll-template.sln", "rb");
+		f2 = open(self.ark2d_dir + "/lib/"+folderName+"/dll-template/dll-template.vcxproj", "rb");
+		sln_contents = f1.read();
+		vcxproj_contents = f2.read();
+		f1.close();
+		f2.close();
+
+		# modify sln/vcxproj files
+		vcxproj_headerfiles = "";
+		vcxproj_sourcefiles = "".encode('utf8');
+		for srcfile in self.src_files:
+
+			#check if src file has a corresponding .h file. add that to the project...
+			findex = srcfile.rfind('.');
+			h_ext = srcfile[findex+1:len(srcfile)];
+			newfh = srcfile[0:findex] + ".h";
+			newfhfull = self.ark2d_dir + self.ds + newfh;
+			if (os.path.exists(newfhfull)):
+				vcxproj_headerfiles += "<ClInclude Include=\"../../"+newfh+"\" /> \n";
+
+			if h_ext == "cpp":
+				vcxproj_sourcefiles += "<ClCompile Include=\"../../"+srcfile+"\" /> \n";
+			elif h_ext == "c":
+				vcxproj_sourcefiles += "<ClCompile Include=\"../../"+srcfile+"\" > \n";
+
+				vcxproj_sourcefiles += "<CompileAsWinRT Condition=\"'$(Configuration)|$(Platform)'=='Debug|Win32'\">false</CompileAsWinRT>\n";
+				vcxproj_sourcefiles += "<CompileAsWinRT Condition=\"'$(Configuration)|$(Platform)'=='Release|Win32'\">false</CompileAsWinRT>\n";
+				vcxproj_sourcefiles += "<CompileAsWinRT Condition=\"'$(Configuration)|$(Platform)'=='Debug|ARM'\">false</CompileAsWinRT>\n";
+				vcxproj_sourcefiles += "<CompileAsWinRT Condition=\"'$(Configuration)|$(Platform)'=='Release|ARM'\">false</CompileAsWinRT>\n";
+				vcxproj_sourcefiles += "<CompileAsWinRT Condition=\"'$(Configuration)|$(Platform)'=='Debug|x64'\">false</CompileAsWinRT>\n";
+				vcxproj_sourcefiles += "<CompileAsWinRT Condition=\"'$(Configuration)|$(Platform)'=='Release|x64'\">false</CompileAsWinRT>\n";
+				vcxproj_sourcefiles += "</ClCompile> \n";
+
+
+
+		ark2d_dir_extra_slashes = util.str_replace(self.ark2d_dir, [("\\", "\\\\")]);
+
+		vcxproj_contents = util.str_replace(vcxproj_contents, [("%COMPILE_HEADER_FILES%", vcxproj_headerfiles.encode('utf8'))]);
+		vcxproj_contents = util.str_replace(vcxproj_contents, [("%COMPILE_SOURCE_FILES%", vcxproj_sourcefiles.encode('utf8'))]);
+		vcxproj_contents = util.str_replace(vcxproj_contents, [("%ARK2D_DIR%", ark2d_dir_extra_slashes.encode('utf8'))]);
+
+		# write sln file
+		print("Write sln file...");
+		f1 = open(output_folder + "/libARK2D.sln", "w");
+		f1.write(sln_contents);
+		f1.close();
+
+		# write vcxproj file
+		print("Write vcxproj file...");
+		f1 = open(output_folder + "/libARK2D.vcxproj", "w");
+		f1.write(vcxproj_contents);
+		f1.close();
 
 	def startWindowsVS2(self):
 		print("Building for Current Platform (" + self.platform + ")");
@@ -1086,62 +1191,7 @@ class Builder:
 		if (self.building_library):
 			print("Building Windows dll.");
 
-			# output directory
-			output_folder = self.ark2d_dir + "/build/windows";# + self.output;
-
-			# make directories
-			mkdirs = [];
-			mkdirs.extend(self.mkdirs);
-			util.makeDirectories(mkdirs);
-
-			sln_contents = ""; ####
-			vcxproj_contents = "";
-
-			# dll sln and vcxproj files
-			f1 = open(self.ark2d_dir + "/lib/windows/dll-template/dll-template.sln", "r");
-			f2 = open(self.ark2d_dir + "/lib/windows/dll-template/dll-template.vcxproj", "r");
-			sln_contents = f1.read();
-			vcxproj_contents = f2.read();
-			f1.close();
-			f2.close();
-
-			# modify sln/vcxproj files
-			vcxproj_headerfiles = "";
-			vcxproj_sourcefiles = "";
-			for srcfile in self.src_files:
-
-				#check if src file has a corresponding .h file. add that to the project...
-				findex = srcfile.rfind('.');
-				h_ext = srcfile[findex+1:len(srcfile)];
-				newfh = srcfile[0:findex] + ".h";
-				newfhfull = self.ark2d_dir + self.ds + newfh;
-				if (os.path.exists(newfhfull)):
-					vcxproj_headerfiles += "<ClInclude Include=\"../../"+newfh+"\" /> \n";
-
-				if h_ext == "c" or h_ext == "cpp":
-					vcxproj_sourcefiles += "<ClCompile Include=\"../../"+srcfile+"\" /> \n";
-
-
-			ark2d_dir_extra_slashes = util.str_replace(self.ark2d_dir, [("\\", "\\\\")]);
-
-			vcxproj_contents = util.str_replace(vcxproj_contents, [("%COMPILE_HEADER_FILES%", vcxproj_headerfiles)]);
-			vcxproj_contents = util.str_replace(vcxproj_contents, [("%COMPILE_SOURCE_FILES%", vcxproj_sourcefiles)]);
-			vcxproj_contents = util.str_replace(vcxproj_contents, [("%ARK2D_DIR%", ark2d_dir_extra_slashes)]);
-
-			# write sln file
-			print("Write sln file...");
-			f1 = open(output_folder + "/libARK2D.sln", "w");
-			f1.write(sln_contents);
-			f1.close();
-
-			# write vcxproj file
-			print("Write vcxproj file...");
-			f1 = open(output_folder + "/libARK2D.vcxproj", "w");
-			f1.write(vcxproj_contents);
-			f1.close();
-
-
-
+			self.doVSDllTemplate("windows");
 
 		else:
 			# self.startWindowsVS();
@@ -5899,7 +5949,7 @@ build:
 
 
 	def fixLocalPath(self, str):
-		if (self.platform == "windows" or self.platform == "windows-phone"):
+		if (self.platform == "windows" or self.platform == "windows-phone" or self.platform == "windows-store"):
 			str = util.str_replace(str, [("/", "\\")]);
 			if (not str.startswith("C:\\") and not str.startswith("D:\\")):
 				str = self.game_dir + self.ds + str;
