@@ -8,6 +8,8 @@ import zlib
 import base64
 import binascii
 import shutil
+import time
+import hashlib
 
 from Util import *
 from MacBuild import *
@@ -1009,8 +1011,179 @@ class Builder:
 
 			# copy pch.h file/s
 			output_folder = self.ark2d_dir + "/build/windows-store";# + self.output;
+
+			print("Write pch.cpp file (if no hash match)...");
+			util.copyfileifdifferent(self.ark2d_dir + "/lib/windows-store/dll-template/pch.cpp", output_folder + "/pch.cpp");
+
+			# copy pch.h file/s
+			print("Write pch.h file...");
+			util.copyfileifdifferent(self.ark2d_dir + "/lib/windows-store/dll-template/pch.h", output_folder + "/pch.h");
+
+			# copy target versionh file/s
+			print("Write targetver.h file...");
+			util.copyfileifdifferent(self.ark2d_dir + "/lib/windows-store/dll-template/targetver.h", output_folder + "/targetver.h");
+
+			if (self.compileproj == True):
+				self.msbuildproj(self.ark2d_dir + "/build/windows-store/libARK2D.vcxproj");
+				pass;
+
+			pass;
+		else:
+			print("Universal Windows Program.");
+
+			output_folder = self.game_dir + "/build/windows-store";
+
+			print("Making directories...");
+			mkdirs = [];
+			mkdirs.extend(self.mkdirs);
+			mkdirs.extend([output_folder + "/data/ark2d/shaders/basic-geometry"])
+			mkdirs.extend([output_folder + "/data/ark2d/shaders/basic-texture"])
+			util.makeDirectories(mkdirs);
+
+			# dll sln and vcxproj files
+			print("Making sln and vcxproj...");
+			f1 = open(self.ark2d_dir + "/lib/windows-store/project-template/project-template.sln", "r");
+			f2 = open(self.ark2d_dir + "/lib/windows-store/project-template/project-template.vcxproj", "r");
+			sln_contents = f1.read();#.encode('ascii');
+			vcxproj_contents = f2.read();
+			f1.close();
+			f2.close();
+
+			# modify sln strings
+			print("Configuring sln file...");
+			sln_contents = util.str_replace(sln_contents, self.tag_replacements);
+			vcxproj_contents = util.str_replace(vcxproj_contents, self.tag_replacements);
+
+			# resources to copy to game project. gotta do this early to generate the VS project
+			print("sort game resources");
+			game_resources_list = [];
+			image_resources = [];
+			audio_resources = [];
+			document_resources = [];
+			filesToCopy = self.listFiles(self.game_resources_dir, False);
+			#print(filesToCopy);
+			for file in filesToCopy:
+				fromfile = self.game_resources_dir + self.ds + file;
+				tofile = output_folder + "/data/" + file;
+
+				game_resources_list.extend(["data\\" + file]);
+
+				file_ext = util.get_str_extension(file);
+				if (util.is_image_extension(file_ext)):
+					image_resources.extend(["data\\" + file]);
+				elif (util.is_audio_extension(file_ext)):
+					# what do we do when it's an audio file idon't know?!
+					pass;
+				else:
+					document_resources.extend(["data\\" + file]);
+
+			# list of game resources in .data dir
+			game_resources_str = "";
+			game_image_resources_str = "";
+			if len(game_resources_list) > 0:
+				print("Generating resource list...");
+				for item in game_resources_list:
+
+					file_ext = util.get_str_extension(item);
+					if (util.is_image_extension(file_ext)):
+						game_image_resources_str += "<Image Include=\"" + item + "\" /> \n";
+					else:
+						game_resources_str += "<None Include=\"" + item + "\"> \n";
+						game_resources_str += "	<DeploymentContent Condition=\"'$(Configuration)|$(Platform)'=='Debug|ARM'\">true</DeploymentContent> \n";
+						game_resources_str += "	<DeploymentContent Condition=\"'$(Configuration)|$(Platform)'=='Release|ARM'\">true</DeploymentContent> \n";
+						game_resources_str += "	<DeploymentContent Condition=\"'$(Configuration)|$(Platform)'=='Debug|Win32'\">true</DeploymentContent> \n";
+						game_resources_str += "	<DeploymentContent Condition=\"'$(Configuration)|$(Platform)'=='Release|Win32'\">true</DeploymentContent> \n";
+						game_resources_str += "</None> \n";
+
+			# list of sourcefiles
+			print("Creating list of Source Files...");
+			vcxproj_headerfiles = "";
+			vcxproj_sourcefiles = "";
+			for srcfile in self.src_files:
+
+				#check if src file has a corresponding .h file. add that to the project...
+				findex = srcfile.rfind('.');
+				h_ext = srcfile[findex+1:len(srcfile)];
+				newfh = srcfile[0:findex] + ".h";
+				newfhfull = self.ark2d_dir + self.ds + newfh;
+				if (os.path.exists(newfhfull)):
+					vcxproj_headerfiles += "<ClInclude Include=\"../../"+newfh+"\" /> \n";
+
+				if h_ext == "c":
+					vcxproj_sourcefiles += "<ClCompile Include=\"../../"+srcfile+"\" > \n";
+					vcxproj_sourcefiles += "<CompileAsWinRT Condition=\"'$(Configuration)|$(Platform)'=='Debug|Win32'\">false</CompileAsWinRT>\n";
+					vcxproj_sourcefiles += "<CompileAsWinRT Condition=\"'$(Configuration)|$(Platform)'=='Release|Win32'\">false</CompileAsWinRT>\n";
+					vcxproj_sourcefiles += "<CompileAsWinRT Condition=\"'$(Configuration)|$(Platform)'=='Debug|ARM'\">false</CompileAsWinRT>\n";
+					vcxproj_sourcefiles += "<CompileAsWinRT Condition=\"'$(Configuration)|$(Platform)'=='Release|ARM'\">false</CompileAsWinRT>\n";
+
+					vcxproj_sourcefiles += "<PreprocessorDefinitions Condition=\"'$(Configuration)|$(Platform)'=='Debug|Win32'\">_CRT_SECURE_NO_WARNINGS;ARK2D_WINDOWS_STORE;ARK2D_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>\n";
+					vcxproj_sourcefiles += "<PreprocessorDefinitions Condition=\"'$(Configuration)|$(Platform)'=='Release|Win32'\">_CRT_SECURE_NO_WARNINGS;ARK2D_WINDOWS_STORE;%(PreprocessorDefinitions)</PreprocessorDefinitions>\n";
+					vcxproj_sourcefiles += "<PreprocessorDefinitions Condition=\"'$(Configuration)|$(Platform)'=='Debug|ARM'\">_CRT_SECURE_NO_WARNINGS;ARK2D_WINDOWS_STORE;ARK2D_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>\n";
+					vcxproj_sourcefiles += "<PreprocessorDefinitions Condition=\"'$(Configuration)|$(Platform)'=='Release|ARM'\">_CRT_SECURE_NO_WARNINGS;ARK2D_WINDOWS_STORE;%(PreprocessorDefinitions)</PreprocessorDefinitions>\n";
+
+					vcxproj_sourcefiles += "</ClCompile> \n";
+				elif h_ext == "hlsl":
+					hlsltype = "";
+					if "pixel" in srcfile:
+						hlsltype = "Pixel";
+					elif "vertex" in srcfile:
+						hlsltype = "Vertex";
+
+					vcxproj_sourcefiles += "	<FxCompile Include=\"../../"+srcfile+"\"> \n ";
+					vcxproj_sourcefiles += "		<FileType>Document</FileType> \n";
+					vcxproj_sourcefiles += "		<DisableOptimizations Condition=\"'$(Configuration)|$(Platform)'=='Debug|Win32'\">false</DisableOptimizations>\n"; # was true...
+					vcxproj_sourcefiles += "		<DisableOptimizations Condition=\"'$(Configuration)|$(Platform)'=='Debug|ARM'\">false</DisableOptimizations>\n";
+					vcxproj_sourcefiles += "		<EnableDebuggingInformation Condition=\"'$(Configuration)|$(Platform)'=='Debug|Win32'\">false</EnableDebuggingInformation>\n";
+					vcxproj_sourcefiles += "		<EnableDebuggingInformation Condition=\"'$(Configuration)|$(Platform)'=='Debug|ARM'\">false</EnableDebuggingInformation>\n";
+					vcxproj_sourcefiles += "		<ShaderType Condition=\"'$(Configuration)|$(Platform)'=='Debug|Win32'\">" + hlsltype + "</ShaderType>\n";
+					vcxproj_sourcefiles += "		<ShaderType Condition=\"'$(Configuration)|$(Platform)'=='Debug|ARM'\">" + hlsltype + "</ShaderType>\n";
+					vcxproj_sourcefiles += "		<ShaderType Condition=\"'$(Configuration)|$(Platform)'=='Release|ARM'\">" + hlsltype + "</ShaderType>\n";
+					vcxproj_sourcefiles += "		<ShaderType Condition=\"'$(Configuration)|$(Platform)'=='Release|Win32'\">" + hlsltype + "</ShaderType>\n";
+					vcxproj_sourcefiles += "	</FxCompile> \n";
+
+				elif h_ext == "cpp":
+					vcxproj_sourcefiles += "<ClCompile Include=\"../../"+srcfile+"\" > \n";
+					vcxproj_sourcefiles += "<PreprocessorDefinitions Condition=\"'$(Configuration)|$(Platform)'=='Debug|Win32'\">_CRT_SECURE_NO_WARNINGS;ARK2D_WINDOWS_STORE;ARK2D_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>\n";
+					vcxproj_sourcefiles += "<PreprocessorDefinitions Condition=\"'$(Configuration)|$(Platform)'=='Release|Win32'\">_CRT_SECURE_NO_WARNINGS;ARK2D_WINDOWS_STORE;%(PreprocessorDefinitions)</PreprocessorDefinitions>\n";
+					vcxproj_sourcefiles += "<PreprocessorDefinitions Condition=\"'$(Configuration)|$(Platform)'=='Debug|ARM'\">_CRT_SECURE_NO_WARNINGS;ARK2D_WINDOWS_STORE;ARK2D_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>\n";
+					vcxproj_sourcefiles += "<PreprocessorDefinitions Condition=\"'$(Configuration)|$(Platform)'=='Release|ARM'\">_CRT_SECURE_NO_WARNINGS;ARK2D_WINDOWS_STORE;%(PreprocessorDefinitions)</PreprocessorDefinitions>\n";
+
+					vcxproj_sourcefiles += "</ClCompile> \n";
+
+
+				else:
+					vcxproj_sourcefiles += "<ClCompile Include=\"../../"+srcfile+"\" /> \n";
+
+			vcxproj_AdditionalIncludeDirs = "";
+			vcxproj_AdditionalPreprocessorDefinitions = "";
+			vcxproj_AdditionalX86DotLibs = "";
+			vcxproj_AdditionalARMDotLibs = "";
+
+			# modify vcxproj strings
+			vcxproj_contents = util.str_replace(vcxproj_contents, [("%GAME_RESOURCES%", game_resources_str)]);
+			vcxproj_contents = util.str_replace(vcxproj_contents, [("%GAME_IMAGE_RESOURCES%", game_image_resources_str)]);
+			vcxproj_contents = util.str_replace(vcxproj_contents, [("%COMPILE_HEADER_FILES%", vcxproj_headerfiles)]);
+			vcxproj_contents = util.str_replace(vcxproj_contents, [("%COMPILE_SOURCE_FILES%", vcxproj_sourcefiles)]);
+			vcxproj_contents = util.str_replace(vcxproj_contents, [("%ADDITIONAL_INCLUDE_DIRECTORIES%", vcxproj_AdditionalIncludeDirs)]);
+			vcxproj_contents = util.str_replace(vcxproj_contents, [("%ADDITIONAL_PREPROCESSOR_DEFINITIONS%", vcxproj_AdditionalPreprocessorDefinitions)]);
+			vcxproj_contents = util.str_replace(vcxproj_contents, [("%ADDITIONAL_DOTLIB_FILES_X86%", vcxproj_AdditionalX86DotLibs)]);
+			vcxproj_contents = util.str_replace(vcxproj_contents, [("%ADDITIONAL_DOTLIB_FILES_ARM%", vcxproj_AdditionalARMDotLibs)]);
+
+			# write sln file
+			print("Write sln file...");
+			f1 = open(output_folder + "/" + self.game_name_safe + ".sln", "w");
+			f1.write(sln_contents);
+			f1.close();
+
+			# write vcxproj file
+			print("Write vcxproj file...");
+			f1 = open(output_folder + "/" + self.game_name_safe + ".vcxproj", "w");
+			f1.write(vcxproj_contents);
+			f1.close();
+
+			# copy pch.h file/s
 			print("Write pch.cpp file...");
-			f1 = open(self.ark2d_dir + "/lib/windows-store/dll-template/pch.cpp", "r");
+			f1 = open(self.ark2d_dir + "/lib/windows-store/project-template/pch.cpp", "r");
 			pch_cpp_contents = f1.read();
 			f1.close();
 			f1 = open(output_folder + "/pch.cpp", "w");
@@ -1019,25 +1192,92 @@ class Builder:
 
 			# copy pch.h file/s
 			print("Write pch.h file...");
-			f1 = open(self.ark2d_dir + "/lib/windows-store/dll-template/pch.h", "r");
+			f1 = open(self.ark2d_dir + "/lib/windows-store/project-template/pch.h", "r");
 			pch_h_contents = f1.read();
 			f1.close();
 			f1 = open(output_folder + "/pch.h", "w");
 			f1.write(pch_h_contents);
 			f1.close();
 
-			# copy target versionh file/s
-			print("Write targetver.h file...");
-			f1 = open(self.ark2d_dir + "/lib/windows-store/dll-template/targetver.h", "r");
-			targetver_h_contents = f1.read();
+			# manifest file
+			print("Create Package.appxmanifest file...");
+			f1 = open(self.ark2d_dir + "/lib/windows-store/project-template/Package.appxmanifest", "r");
+			appxmanifest_contents = f1.read();
 			f1.close();
-			f1 = open(output_folder + "/targetver.h", "w");
-			f1.write(targetver_h_contents);
+			appxmanifest_contents = util.str_replace(appxmanifest_contents, self.tag_replacements);
+			f1 = open(output_folder + "/Package.appxmanifest", "w");
+			f1.write(appxmanifest_contents);
 			f1.close();
 
+			# win8 game source file
+			print("Create UWP Game Class...");
+			f1 = open(self.ark2d_dir + "/lib/windows-store/project-template/WindowsUWPGame.cpp", "r");
+			game_cpp_contents = f1.read();
+			f1.close();
+
+			game_cpp_contents = util.str_replace(game_cpp_contents, self.tag_replacements);
+			game_cpp_contents = util.str_replace(game_cpp_contents, [("%GAME_WIDTH%", str(800))]);
+			game_cpp_contents = util.str_replace(game_cpp_contents, [("%GAME_HEIGHT%", str(600))]);
+
+			f1 = open(output_folder + "/WindowsUWPGame.cpp", "w");
+			f1.write(game_cpp_contents);
+			f1.close();
+
+			# win8 game source file
+			print("Create UWP Game Header...");
+			f1 = open(self.ark2d_dir + "/lib/windows-store/project-template/WindowsUWPGame.h", "r");
+			game_h_contents = f1.read();
+			f1.close();
+			f1 = open(output_folder + "/WindowsUWPGame.h", "w");
+			f1.write(game_h_contents);
+			f1.close();
+
+			# copy resources in to wp8 game project folder.
+			print("Copying data in...");
+			print(self.game_resources_dir);
+			self.mycopytree(self.game_resources_dir, output_folder + "/data/");
+			self.mycopytree(self.game_resources_dir, output_folder + "/Debug/" + self.game_name_safe + "/AppX/data"); ## disable this until it works
+			self.mycopytree(self.game_resources_dir, output_folder + "/Release/"+ self.game_name_safe + "/AppX/data/");
+
+			# copy ark2d.dll in
+			print("Copying ARK2D data in...");
+			self.mycopytree(self.ark2d_dir + "\\lib\\windows-store\\project-template\\uwp", output_folder + "/data/ark2d/uwp/");
+
+
+
+			# Shaders!
+			mkdirs = [];
+			mkdirs.extend([output_folder + "\\data\\ark2d\\shaders"]);
+			mkdirs.extend([output_folder + "\\ARM"]);
+			mkdirs.extend([output_folder + "\\ARM\\Debug"]);
+			mkdirs.extend([output_folder + "\\ARM\\Debug\\ARK2D"]);
+			util.makeDirectories(mkdirs);
+			shutil.copy(self.ark2d_dir + "\\build\\windows-store\\ARM\\Debug\\libARK2D\\geometry-dx11-pixel.cso", output_folder + "/data/ark2d/shaders/basic-geometry/geometry-dx11-pixel.cso");
+			shutil.copy(self.ark2d_dir + "\\build\\windows-store\\ARM\\Debug\\libARK2D\\geometry-dx11-vertex.cso", output_folder + "/data/ark2d/shaders/basic-geometry/geometry-dx11-vertex.cso");
+			shutil.copy(self.ark2d_dir + "\\build\\windows-store\\ARM\\Debug\\libARK2D\\texture-dx11-pixel.cso", output_folder + "/data/ark2d/shaders/basic-texture/texture-dx11-pixel.cso");
+			shutil.copy(self.ark2d_dir + "\\build\\windows-store\\ARM\\Debug\\libARK2D\\texture-dx11-vertex.cso", output_folder + "/data/ark2d/shaders/basic-texture/texture-dx11-vertex.cso");
+
+			# DLLs
+			#shutil.copy(self.ark2d_dir + "\\build\\windows-store\\ARM\\Debug\\libARK2D\\ARK2D_arm_debug.dll", self.game_dir + "\\" + self.build_folder + self.ds + self.platform + self.ds + "ARK2D_arm_debug.dll");
+			#shutil.copy(self.ark2d_dir + "\\build\\windows-store\\ARM\\Debug\\libARK2D\\ARK2D_arm_debug.lib", self.game_dir + "\\" + self.build_folder + self.ds + self.platform + self.ds + "ARK2D_arm_debug.lib");
+			shutil.copy(self.ark2d_dir + "\\build\\windows-store\\ARM\\Release\\libARK2D\\ARK2D_arm.dll", self.game_dir + "\\" + self.build_folder + self.ds + self.platform + self.ds + "ARK2D_arm.dll");
+			shutil.copy(self.ark2d_dir + "\\build\\windows-store\\ARM\\Release\\libARK2D\\ARK2D_arm.lib", self.game_dir + "\\" + self.build_folder + self.ds + self.platform + self.ds + "ARK2D_arm.lib");
+
+			shutil.copy(self.ark2d_dir + "\\build\\windows-store\\Debug\\libARK2D\\ARK2D_x86_debug.dll", self.game_dir + "\\" + self.build_folder + self.ds + self.platform + self.ds + "ARK2D_x86_debug.dll");
+			shutil.copy(self.ark2d_dir + "\\build\\windows-store\\Debug\\libARK2D\\ARK2D_x86_debug.lib", self.game_dir + "\\" + self.build_folder + self.ds + self.platform + self.ds + "ARK2D_x86_debug.lib");
+			shutil.copy(self.ark2d_dir + "\\build\\windows-store\\Release\\libARK2D\\ARK2D_x86.dll", self.game_dir + "\\" + self.build_folder + self.ds + self.platform + self.ds + "ARK2D_x86.dll");
+			shutil.copy(self.ark2d_dir + "\\build\\windows-store\\Release\\libARK2D\\ARK2D_x86.lib", self.game_dir + "\\" + self.build_folder + self.ds + self.platform + self.ds + "ARK2D_x86.lib");
+
+			shutil.copy(self.ark2d_dir + "\\build\\windows-store\\x64\\Debug\\libARK2D\\ARK2D_x64_debug.dll", self.game_dir + "\\" + self.build_folder + self.ds + self.platform + self.ds + "ARK2D_x64_debug.dll");
+			shutil.copy(self.ark2d_dir + "\\build\\windows-store\\x64\\Debug\\libARK2D\\ARK2D_x64_debug.lib", self.game_dir + "\\" + self.build_folder + self.ds + self.platform + self.ds + "ARK2D_x64_debug.lib");
+			shutil.copy(self.ark2d_dir + "\\build\\windows-store\\x64\\Release\\libARK2D\\ARK2D_x64.dll", self.game_dir + "\\" + self.build_folder + self.ds + self.platform + self.ds + "ARK2D_x64.dll");
+			shutil.copy(self.ark2d_dir + "\\build\\windows-store\\x64\\Release\\libARK2D\\ARK2D_x64.lib", self.game_dir + "\\" + self.build_folder + self.ds + self.platform + self.ds + "ARK2D_x64.lib");
+
+
+			#print("One final header...");
+			#self.generateARKH(output_folder + "/ARK.h");
+
 			pass;
-		else:
-			print("Cannot build games for Windows Store yet.");
 
 		pass;
 	def startXboxOne(self):
@@ -1149,14 +1389,25 @@ class Builder:
 				vcxproj_sourcefiles += "<ClCompile Include=\"../../"+srcfile+"\" /> \n";
 			elif h_ext == "c":
 				vcxproj_sourcefiles += "<ClCompile Include=\"../../"+srcfile+"\" > \n";
-
-				vcxproj_sourcefiles += "<CompileAsWinRT Condition=\"'$(Configuration)|$(Platform)'=='Debug|Win32'\">false</CompileAsWinRT>\n";
-				vcxproj_sourcefiles += "<CompileAsWinRT Condition=\"'$(Configuration)|$(Platform)'=='Release|Win32'\">false</CompileAsWinRT>\n";
-				vcxproj_sourcefiles += "<CompileAsWinRT Condition=\"'$(Configuration)|$(Platform)'=='Debug|ARM'\">false</CompileAsWinRT>\n";
-				vcxproj_sourcefiles += "<CompileAsWinRT Condition=\"'$(Configuration)|$(Platform)'=='Release|ARM'\">false</CompileAsWinRT>\n";
-				vcxproj_sourcefiles += "<CompileAsWinRT Condition=\"'$(Configuration)|$(Platform)'=='Debug|x64'\">false</CompileAsWinRT>\n";
-				vcxproj_sourcefiles += "<CompileAsWinRT Condition=\"'$(Configuration)|$(Platform)'=='Release|x64'\">false</CompileAsWinRT>\n";
+				vcxproj_sourcefiles += "	<CompileAsWinRT>false</CompileAsWinRT>\n";
 				vcxproj_sourcefiles += "</ClCompile> \n";
+			elif h_ext == "hlsl":
+				hlsltype = "";
+				if "pixel" in srcfile:
+					hlsltype = "Pixel";
+				elif "vertex" in srcfile:
+					hlsltype = "Vertex";
+
+				vcxproj_sourcefiles += "	<FxCompile Include=\"../../"+srcfile+"\"> \n ";
+				vcxproj_sourcefiles += "		<FileType>Document</FileType> \n";
+				vcxproj_sourcefiles += "		<DisableOptimizations Condition=\"'$(Configuration)|$(Platform)'=='Debug|Win32'\">true</DisableOptimizations>\n"; # was true...
+				vcxproj_sourcefiles += "		<DisableOptimizations Condition=\"'$(Configuration)|$(Platform)'=='Debug|ARM'\">true</DisableOptimizations>\n";
+				vcxproj_sourcefiles += "		<DisableOptimizations Condition=\"'$(Configuration)|$(Platform)'=='Debug|x64'\">true</DisableOptimizations>\n";
+				vcxproj_sourcefiles += "		<EnableDebuggingInformation Condition=\"'$(Configuration)|$(Platform)'=='Debug|Win32'\">true</EnableDebuggingInformation>\n";
+				vcxproj_sourcefiles += "		<EnableDebuggingInformation Condition=\"'$(Configuration)|$(Platform)'=='Debug|ARM'\">true</EnableDebuggingInformation>\n";
+				vcxproj_sourcefiles += "		<EnableDebuggingInformation Condition=\"'$(Configuration)|$(Platform)'=='Debug|x64'\">true</EnableDebuggingInformation>\n";
+				vcxproj_sourcefiles += "		<ShaderType>" + hlsltype + "</ShaderType>\n";
+				vcxproj_sourcefiles += "	</FxCompile> \n";
 
 
 
@@ -1166,17 +1417,53 @@ class Builder:
 		vcxproj_contents = util.str_replace(vcxproj_contents, [("%COMPILE_SOURCE_FILES%", vcxproj_sourcefiles.encode('utf8'))]);
 		vcxproj_contents = util.str_replace(vcxproj_contents, [("%ARK2D_DIR%", ark2d_dir_extra_slashes.encode('utf8'))]);
 
+		# get existing file contents, hash them against these new ones.
+		# only overwrite if they don't match!
+		f1 = open(output_folder + "/libARK2D.sln", "r");
+		existing_sln_contents = f1.read(); f1.close();
+		existing_sln_hash = hashlib.md5(existing_sln_contents).hexdigest();
+		new_sln_hash = hashlib.md5(sln_contents).hexdigest();
+
+		f1 = open(output_folder + "/libARK2D.vcxproj", "r");
+		existing_vcxproj_contents = f1.read(); f1.close();
+		existing_vcxproj_hash = hashlib.md5(existing_vcxproj_contents).hexdigest();
+		new_vcxproj_hash = hashlib.md5(vcxproj_contents).hexdigest();
+
+
 		# write sln file
-		print("Write sln file...");
-		f1 = open(output_folder + "/libARK2D.sln", "w");
-		f1.write(sln_contents);
-		f1.close();
+		if new_sln_hash != existing_sln_hash:
+			print("Write sln file...");
+			f1 = open(output_folder + "/libARK2D.sln", "w");
+			f1.write(sln_contents);
+			f1.close();
+		else:
+			print("Skipping .sln file generation as hashes match.");
 
 		# write vcxproj file
-		print("Write vcxproj file...");
-		f1 = open(output_folder + "/libARK2D.vcxproj", "w");
-		f1.write(vcxproj_contents);
-		f1.close();
+		if new_vcxproj_hash != existing_vcxproj_hash:
+			print("Write vcxproj file...");
+			f1 = open(output_folder + "/libARK2D.vcxproj", "w");
+			f1.write(vcxproj_contents);
+			f1.close();
+		else:
+			print("Skipping .vcxproj file generation as hashes match.");
+
+	def msbuildproj(self, vcxproj):
+		print("Compiling VS project...");
+		starttime = time.time();
+		ret = 0;
+		#ret = subprocess.call(["MSBuild.exe", vcxproj, "/p:Configuration=Debug", "/p:Platform=x86"], shell=True);
+		#ret = subprocess.call(["MSBuild.exe", vcxproj, "/p:Configuration=Debug", "/p:Platform=x64"], shell=True);
+		ret = subprocess.call(["MSBuild.exe", vcxproj, "/p:Configuration=Debug", "/p:Platform=ARM"], shell=True);
+		if ret != 0:
+			print("stopping");
+			return;
+		#ret = subprocess.call(["MSBuild.exe", vcxproj, "/p:Configuration=Release", "/p:Platform=x86"], shell=True);
+		#ret = subprocess.call(["MSBuild.exe", vcxproj, "/p:Configuration=Release", "/p:Platform=x64"], shell=True);
+		#ret = subprocess.call(["MSBuild.exe", vcxproj, "/p:Configuration=Release", "/p:Platform=ARM"], shell=True);
+		endtime = time.time();
+		print("compilation took " + str(endtime - starttime) + " seconds");
+		pass;
 
 	def startWindowsVS2(self):
 		print("Building for Current Platform (" + self.platform + ")");
@@ -1192,6 +1479,10 @@ class Builder:
 			print("Building Windows dll.");
 
 			self.doVSDllTemplate("windows");
+
+			if (self.compileproj == True):
+				self.msbuildproj(self.ark2d_dir + "/build/windows/libARK2D.vcxproj");
+				pass;
 
 		else:
 			# self.startWindowsVS();

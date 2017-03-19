@@ -116,6 +116,7 @@ if __name__ == "__main__":
 	onlygeneratestrings = False;
 	onlyassets = False;
 	newconfig = False;
+	compileproj = False;
 
 	count = 0;
 	print("Args: " + str(len(sys.argv)));
@@ -167,6 +168,12 @@ if __name__ == "__main__":
 			else:
 				newconfig = False;
 
+		elif parts[0] == "compileproj":
+			if(parts[1] == "true"):
+				compileproj = True;
+			else:
+				compileproj = False;
+
 		count += 1;
 
 	print("---");
@@ -189,13 +196,18 @@ if __name__ == "__main__":
 		print("platform " + sys.platform + " not supported");
 		exit(0);
 
+
+
 	# have to read json and override some values for back-compatibility.
+	ark2d_dir = os.path.dirname(os.path.realpath(__file__)) +"/..";
+	if (ark2d_dir[len(ark2d_dir)-2:len(ark2d_dir)] == ".."):
+		ark2d_dir = ark2d_dir[0:ark2d_dir.rfind("\\")];
+
 	if (newconfig and type == "game"):
 		try:
 			if (use_dir == False):
 				dir = os.getcwd();
 
-			ark2d_dir = os.path.dirname(os.path.realpath(__file__));
 			print("---");
 			print("Current file: " + ark2d_dir);
 			print("Current working directory: " + dir);
@@ -234,6 +246,7 @@ if __name__ == "__main__":
 
 			a = Builder();
 			a.newconfig = True;
+			a.compileproj = compileproj;
 			a.debug = debug;
 			a.platform = target_config['platform'];
 			a.output = target_config['folder'];
@@ -277,7 +290,21 @@ if __name__ == "__main__":
 				#exit(0);
 
 			a.gamePreInit();
-			a.tag_replacements = [("%PREPRODUCTION_DIR%", a.game_preproduction_dir), ("%ARK2D_DIR%", a.ark2d_dir), ("%GAME_DIR%", a.game_dir)];
+			a.tag_replacements = [
+				("%PREPRODUCTION_DIR%", a.game_preproduction_dir),
+				("%ARK2D_DIR%", a.ark2d_dir),
+				("%COMPANY_NAME%", a.developer_name),
+				("%COMPANY_NAME_SAFE%", a.developer_name_safe),
+				("%GAME_DIR%", a.game_dir),
+				("%GAME_NAME%", a.game_name),
+				("%GAME_NAME_SAFE%", a.game_name_safe),
+				("%GAME_SHORT_NAME%", a.game_class_name),
+				("%GAME_CLASS_NAME%", a.game_class_name),
+				("%GAME_CLEAR_COLOR%", a.game_clear_color),
+				("%GAME_ORIENTATION%", a.game_orientation)#,
+				#("%GAME_WIDTH%", str(0))
+				#("%GAME_HEIGHT%", str(0))
+			];
 
 			a.mingw_link = "";
 
@@ -421,9 +448,9 @@ if __name__ == "__main__":
 
 		print("---");
 		print("Building Library");
-		ark2d_dir = os.path.dirname(os.path.realpath(__file__));
 
 		a = Builder();
+		a.compileproj = compileproj;
 		a.debug = debug;
 		a.ark2d_dir = ark2d_dir;
 
@@ -484,6 +511,7 @@ if __name__ == "__main__":
 		print("Must use new configs for game building? ");
 		exit(0);
 
+		"""
 		print("---");
 		print("Building game");
 
@@ -520,6 +548,8 @@ if __name__ == "__main__":
 				a.platform = 'osx';
 			elif (target=='windows-vs'):
 				a.platform = 'windows';
+			elif (target=='windows-store'):
+				a.platform = 'windows-store';
 			elif (target=='windows-phone'):
 				a.platform = 'windows-phone';
 			elif (target=='ubuntu-linux'):
@@ -587,7 +617,7 @@ if __name__ == "__main__":
 		except:
 			print("Done");
 			pass;
-
+		"""
 
 
 

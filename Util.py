@@ -1,5 +1,6 @@
 import os
 import errno
+import hashlib;
 
 class Util:
 	def __init__(self):
@@ -45,3 +46,23 @@ class Util:
 		if (ext == "ogg" or ext == "mp3" or ext == "wav"):
 			return True;
 		return False;
+
+	def copyfileifdifferent(self, source, dest):
+		f1 = open(source, "r");
+		new_contents = f1.read(); f1.close();
+		new_hash = hashlib.md5(new_contents).hexdigest();
+
+		try:
+			f2 = open(dest, "r");
+			existing_contents = f2.read(); f2.close();
+			existing_hash = hashlib.md5(existing_contents).hexdigest();
+		except:
+			pass;
+
+		if new_hash != existing_hash:
+			print("Copy file if different...");
+			f1 = open(dest, "w");
+			f1.write(new_contents);
+			f1.close();
+		else:
+			print("Skipping " + source + " file as hashes match.");
