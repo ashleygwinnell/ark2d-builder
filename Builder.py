@@ -1216,8 +1216,8 @@ class Builder:
 			f1.close();
 
 			game_cpp_contents = util.str_replace(game_cpp_contents, self.tag_replacements);
-			game_cpp_contents = util.str_replace(game_cpp_contents, [("%GAME_WIDTH%", str(800))]);
-			game_cpp_contents = util.str_replace(game_cpp_contents, [("%GAME_HEIGHT%", str(600))]);
+			game_cpp_contents = util.str_replace(game_cpp_contents, [("%GAME_WIDTH%", str(self.target_config['windows-store']['game_width']))]);
+			game_cpp_contents = util.str_replace(game_cpp_contents, [("%GAME_HEIGHT%", str(self.target_config['windows-store']['game_height']))]);
 
 			f1 = open(output_folder + "/WindowsUWPGame.cpp", "w");
 			f1.write(game_cpp_contents);
