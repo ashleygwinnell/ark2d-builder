@@ -384,7 +384,8 @@ class Builder:
 		arkh += "#endif" + nl;
 		"""
 
-		arkh = "#include <ARK.h>" + nl;
+		#arkh = "#include <ARK.h>" + nl;
+		arkh = "";
 
 		f = open(floc, "w");
 		f.write(arkh);
@@ -1717,7 +1718,8 @@ class Builder:
 			shutil.copy(self.ark2d_dir + "\\lib\\windows\\vs2013\\x86\\msvcp120.dll", self.game_dir + self.ds + self.build_folder + self.ds + self.output + "\\Release\\msvcp120.dll");
 			shutil.copy(self.ark2d_dir + "\\lib\\windows\\angelscript\\angelscript.dll", self.game_dir + self.ds + self.build_folder + self.ds + self.output + "\\Release\\angelscript.dll");
 
-			# copy any other dll dependencies...
+			# copy any other dll dependencies..
+			print("Copying ARK2D data in... (extra dlls)");
 			for extradll in extra_dlls:
 				print(extradll);
 				extradll_name = util.get_str_filename(extradll);

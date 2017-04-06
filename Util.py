@@ -1,6 +1,7 @@
 import os
 import errno
 import hashlib;
+import sys
 
 class Util:
 	def __init__(self):
@@ -22,13 +23,19 @@ class Util:
 				else: raise
 		pass;
 
+	def getDirectorySeparator(self):
+		if sys.platform == "win32":
+			return "\\";
+		return "/";
+
 	def get_str_extension(self, str):
 		findex = str.rfind('.');
 		h_ext = str[findex+1:len(str)];
 		return h_ext;
 
 	def get_str_filename(self, str):
-		findex = str.rfind(self.ds);
+		ds = self.getDirectorySeparator();
+		findex = str.rfind(ds);
 		filename = str[findex+1:len(str)];
 		return filename;
 

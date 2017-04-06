@@ -11,6 +11,9 @@ import shutil
 
 from Game import *
 from Builder import *
+from Util import *
+
+util = Util();
 
 #
 # Windows requires MinGW 3.4.5 with includes:
@@ -284,7 +287,6 @@ if __name__ == "__main__":
 				a.generateStrings();
 				exit(0);
 
-
 			if (clean == True or target_config['clean'] == True):
 				a.clean();
 				#exit(0);
@@ -311,7 +313,7 @@ if __name__ == "__main__":
 			# Add libs to ark2d build system
 			if ("libs" in target_config):
 				for lib in target_config['libs']:
-					lib2 = a.str_replace(lib, a.tag_replacements);
+					lib2 = util.str_replace(lib, a.tag_replacements);
 					lib2 = a.fixLocalPath(lib2);
 					a.libs.extend([lib2]);
 
@@ -320,7 +322,7 @@ if __name__ == "__main__":
 
 			if ("include_dirs" in target_config):
 				for idir in target_config['include_dirs']:
-					idir = a.str_replace(idir, a.tag_replacements);
+					idir = util.str_replace(idir, a.tag_replacements);
 					idir = a.fixLocalPath(idir);
 					a.include_dirs.extend([idir]);
 
@@ -355,37 +357,37 @@ if __name__ == "__main__":
 
 				if "src_files" in a.android_config:
 					for src in a.android_config['src_files']:
-						src_actual = a.str_replace(src, a.tag_replacements);
+						src_actual = util.str_replace(src, a.tag_replacements);
 						a.android_srcfiles.extend([src_actual]);
 
 				if "libs" in a.android_config:
 					for lib in a.android_config['libs']:
-						lib_actual = a.str_replace(lib, a.tag_replacements);
+						lib_actual = util.str_replace(lib, a.tag_replacements);
 						a.android_libs.extend([lib_actual]);
 
 				# library projects
 				if "library_projects" in a.android_config:
 					for libproj in a.android_config['library_projects']:
-						libproj_actual = a.str_replace(libproj, a.tag_replacements);
+						libproj_actual = util.str_replace(libproj, a.tag_replacements);
 						a.android_libraryprojects.extend([libproj_actual]);
 
 				if "android" in target_config and "library_projects" in target_config['android']:
 					for libproj in target_config['android']['library_projects']:
 						print("library project: " + libproj);
-						libproj_actual = a.str_replace(libproj, a.tag_replacements);
+						libproj_actual = util.str_replace(libproj, a.tag_replacements);
 						a.android_libraryprojects.extend([libproj_actual]);
 
 				if "override_activity" in a.android_config:
-					a.android_config["override_activity"] = a.str_replace(a.android_config["override_activity"], a.tag_replacements);
+					a.android_config["override_activity"] = util.str_replace(a.android_config["override_activity"], a.tag_replacements);
 
 				if "override_manifest" in a.android_config:
-					a.android_config["override_manifest"] = a.str_replace(a.android_config["override_manifest"], a.tag_replacements);
+					a.android_config["override_manifest"] = util.str_replace(a.android_config["override_manifest"], a.tag_replacements);
 
 				if "override_ids" in a.android_config:
-					a.android_config["override_ids"] = a.str_replace(a.android_config["override_ids"], a.tag_replacements);
+					a.android_config["override_ids"] = util.str_replace(a.android_config["override_ids"], a.tag_replacements);
 
 				if "override_strings" in a.android_config:
-					a.android_config["override_strings"] = a.str_replace(a.android_config["override_strings"], a.tag_replacements);
+					a.android_config["override_strings"] = util.str_replace(a.android_config["override_strings"], a.tag_replacements);
 
 			# Windows Phone 8 config.
 			if (a.platform == "windows-phone"):
