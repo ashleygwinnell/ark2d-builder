@@ -33,7 +33,7 @@ class MacBuild:
 
 		gyp_executable = config['osx']['gyp_executable'];
 
-		#f = open(self.game_dir + "/config.json", "r");
+		#f = open(self.builder.game_dir + "/config.json", "r");
 		#fcontents = f.read();
 		#f.close();
 		#config = json.loads(fcontents);
@@ -122,7 +122,7 @@ class MacBuild:
 			f.close();
 
 			#exit(0);
-			#pchfilename = self.game_dir + ds + "lib/iphone/" + projectname + "-Prefix.pch";
+			#pchfilename = self.builder.game_dir + ds + "lib/iphone/" + projectname + "-Prefix.pch";
 			pchfilename = self.builder.game_dir + ds + self.builder.build_folder + ds + self.builder.output + ds + projectname + "-Prefix.pch";
 			xcconfigfile = self.builder.game_dir + ds + self.builder.build_folder + ds + self.builder.output + ds + projectname + ".xcconfig";
 
@@ -209,20 +209,20 @@ class MacBuild:
 			mkdirs.extend(self.builder.mkdirs);
 			#mkdirs.extend([self.builder.game_dir + ds + self.builder.build_folder + ds + self.builder.platform + ds + "data" + ds + "ark2d"]);
 			#mkdirs.extend()
-			self.makeDirectories(mkdirs);
+			util.makeDirectories(mkdirs);
 
 			#projectname ark2d
-			projectname = self.game_name_safe; #config['game_short_name'];
-			projectnameunsafe = self.game_name; #config['game_name'];
+			projectname = self.builder.game_name_safe; #config['game_short_name'];
+			projectnameunsafe = self.builder.game_name; #config['game_name'];
 
 			# generate gyp file.
 			print("creating gyp file");
-			gypfilename = self.game_dir + ds + self.build_folder + ds + self.output + ds + projectname + ".gyp";
+			gypfilename = self.builder.game_dir + ds + self.builder.build_folder + ds + self.builder.output + ds + projectname + ".gyp";
 
 			gypfile = {};
 			gypfile['defines'] = []; #'ARK2D_IPHONE'];
 			gypfile['defines'].extend(["ARK_INCLUDES_HEADER="+self.builder.ark2d_dir + "/src/ARK.h"]);
-			gypfile['defines'].extend(self.preprocessor_definitions);
+			gypfile['defines'].extend(self.builder.preprocessor_definitions);
 
 			gypfile['targets'] = [];
 
@@ -232,18 +232,18 @@ class MacBuild:
 			gypfiletarget['mac_bundle'] = 1;
 			#'mac_bundle': 1,
 			gypfiletarget['include_dirs'] = [];
-			for includedir in self.include_dirs:
+			for includedir in self.builder.include_dirs:
 				gypfiletarget['include_dirs'].extend([includedir]);
 			gypfiletarget['sources'] = [];
 
-			for srcfile in self.src_files: #config['game_src_files']:
+			for srcfile in self.builder.src_files: #config['game_src_files']:
 				gypfiletarget['sources'].extend(["../../"+srcfile]);
 
 				#check if src file has a corresponding .h file. add that to the project...
 				findex = srcfile.rfind('.');
 				h_ext = srcfile[findex+1:len(srcfile)];
 				newfh = srcfile[0:findex] + ".h";
-				newfhfull = self.game_dir + ds + newfh;
+				newfhfull = self.builder.game_dir + ds + newfh;
 				if (os.path.exists(newfhfull)):
 					gypfiletarget['sources'].extend(["../../"+newfh]);
 
@@ -254,7 +254,7 @@ class MacBuild:
 			gypfiletarget['conditions'] = [];
 			gypfiletargetcondition = {};
 			gypfiletargetcondition['defines'] = ['ARK2D_MACINTOSH', 'ARK2D_DESKTOP']; #, 'CF_EXCLUDE_CSTD_HEADERS'];
-			gypfiletargetcondition['defines'].extend(self.preprocessor_definitions);
+			gypfiletargetcondition['defines'].extend(self.builder.preprocessor_definitions);
 			gypfiletargetcondition['sources'] = [];
 
 			"""
@@ -285,7 +285,7 @@ class MacBuild:
 					'outputs': [],
 					'action': [
 						'python',
-						self.builder.ark2d_dir + '/build.py',
+						self.builder.ark2d_dir + '/builder/main.py',
 						'dir=' + self.builder.game_dir,
 						'spritesheets=true',
 						'newconfig=true',
@@ -300,7 +300,7 @@ class MacBuild:
 					'outputs': [],
 					'action': [
 						'python',
-						self.builder.ark2d_dir + '/build.py',
+						self.builder.ark2d_dir + '/builder/main.py',
 						'dir=' + self.builder.game_dir,
 						'strings=true',
 						'newconfig=true',
@@ -737,65 +737,65 @@ class MacBuild:
 						icongenobj['to'] = [
 							# iPhone Icon
 							{
-								"filename": self.game_dir + ds + self.build_folder + ds + self.platform + ds + "Icon.png",
+								"filename": self.builder.game_dir + ds + self.builder.build_folder + ds + self.platform + ds + "Icon.png",
 								"width" : 57,
 								"height": 57,
 								"interpolation": iconinterpolation
 							},
 							{
-								"filename": self.game_dir + ds + self.build_folder + ds + self.platform + ds + "Icon@2x.png",
+								"filename": self.builder.game_dir + ds + self.builder.build_folder + ds + self.platform + ds + "Icon@2x.png",
 								"width" : 114,
 								"height": 114,
 								"interpolation": iconinterpolation
 							},
 							# iPhone Spotlight Icon
 							{
-								"filename": self.game_dir + ds + self.build_folder + ds + self.platform + ds + "Icon-Small.png",
+								"filename": self.builder.game_dir + ds + self.builder.build_folder + ds + self.platform + ds + "Icon-Small.png",
 								"width" : 29,
 								"height": 29,
 								"interpolation": iconinterpolation
 							},
 							{
-								"filename": self.game_dir + ds + self.build_folder + ds + self.platform + ds + "Icon-Small@2x.png",
+								"filename": self.builder.game_dir + ds + self.builder.build_folder + ds + self.platform + ds + "Icon-Small@2x.png",
 								"width" : 58,
 								"height": 58,
 								"interpolation": iconinterpolation
 							},
 							# iPad Icon
 							{
-								"filename": self.game_dir + ds + self.build_folder + ds + self.platform + ds + "Icon-72.png",
+								"filename": self.builder.game_dir + ds + self.builder.build_folder + ds + self.platform + ds + "Icon-72.png",
 								"width" : 72,
 								"height": 72,
 								"interpolation": iconinterpolation
 							},
 							{
-								"filename": self.game_dir + ds + self.build_folder + ds + self.platform + ds + "Icon-72@2x.png",
+								"filename": self.builder.game_dir + ds + self.builder.build_folder + ds + self.platform + ds + "Icon-72@2x.png",
 								"width" : 144,
 								"height": 144,
 								"interpolation": iconinterpolation
 							},
 							# iPad Spotlight Icon
 							{
-								"filename": self.game_dir + ds + self.build_folder + ds + self.platform + ds + "Icon-Small-50.png",
+								"filename": self.builder.game_dir + ds + self.builder.build_folder + ds + self.platform + ds + "Icon-Small-50.png",
 								"width" : 50,
 								"height": 50,
 								"interpolation": iconinterpolation
 							},
 							{
-								"filename": self.game_dir + ds + self.build_folder + ds + self.platform + ds + "Icon-Small-50@2x.png",
+								"filename": self.builder.game_dir + ds + self.builder.build_folder + ds + self.platform + ds + "Icon-Small-50@2x.png",
 								"width" : 100,
 								"height": 100,
 								"interpolation": iconinterpolation
 							},
 							# app store icon
 							{
-								"filename": self.game_dir + ds + self.build_folder + ds + self.platform + ds + "iTunesArtwork",
+								"filename": self.builder.game_dir + ds + self.builder.build_folder + ds + self.platform + ds + "iTunesArtwork",
 								"width" : 512,
 								"height": 512,
 								"interpolation": iconinterpolation
 							},
 							{
-								"filename": self.game_dir + ds + self.build_folder + ds + self.platform + ds + "iTunesArtwork@2x",
+								"filename": self.builder.game_dir + ds + self.builder.build_folder + ds + self.platform + ds + "iTunesArtwork@2x",
 								"width" : 1024,
 								"height": 1024,
 								"interpolation": iconinterpolation
