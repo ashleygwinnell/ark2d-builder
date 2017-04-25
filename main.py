@@ -203,8 +203,9 @@ if __name__ == "__main__":
 
 	# have to read json and override some values for back-compatibility.
 	ark2d_dir = os.path.dirname(os.path.realpath(__file__)) +"/..";
-	if (ark2d_dir[len(ark2d_dir)-2:len(ark2d_dir)] == ".."):
-		ark2d_dir = ark2d_dir[0:ark2d_dir.rfind("\\")];
+	if (sys.platform == "win32"):
+		if (ark2d_dir[len(ark2d_dir)-2:len(ark2d_dir)] == ".."):
+			ark2d_dir = ark2d_dir[0:ark2d_dir.rfind("\\")];
 
 	if (newconfig and type == "game"):
 		try:
