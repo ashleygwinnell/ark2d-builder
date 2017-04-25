@@ -1420,12 +1420,14 @@ class Builder:
 
 		# get existing file contents, hash them against these new ones.
 		# only overwrite if they don't match!
-		f1 = open(output_folder + "/libARK2D.sln", "r");
+		f1 = open(output_folder + "/libARK2D.sln", "a+");
+		f1.seek(0);
 		existing_sln_contents = f1.read(); f1.close();
 		existing_sln_hash = hashlib.md5(existing_sln_contents).hexdigest();
 		new_sln_hash = hashlib.md5(sln_contents).hexdigest();
 
-		f1 = open(output_folder + "/libARK2D.vcxproj", "r");
+		f1 = open(output_folder + "/libARK2D.vcxproj", "a+");
+		f1.seek(0);
 		existing_vcxproj_contents = f1.read(); f1.close();
 		existing_vcxproj_hash = hashlib.md5(existing_vcxproj_contents).hexdigest();
 		new_vcxproj_hash = hashlib.md5(vcxproj_contents).hexdigest();
@@ -1685,8 +1687,9 @@ class Builder:
 			shutil.copy(self.ark2d_dir + "\\lib\\windows\\wrap_oal.dll", self.game_dir + self.ds + self.build_folder + self.ds + self.output + "\\Debug\\wrap_oal.dll");
 			shutil.copy(self.ark2d_dir + "\\lib\\windows\\zlib1.dll", self.game_dir + self.ds + self.build_folder + self.ds + self.output + "\\Debug\\zlib1.dll");
 			shutil.copy(self.ark2d_dir + "\\lib\\windows\\OpenAL32.dll", self.game_dir + self.ds + self.build_folder + self.ds + self.output + "\\Debug\\OpenAL32.dll");
-			shutil.copy(self.ark2d_dir + "\\lib\\windows\\vs2013\\x86\\msvcr120d.dll", self.game_dir + self.ds + self.build_folder + self.ds + self.output + "\\Debug\\msvcr120d.dll");
-			shutil.copy(self.ark2d_dir + "\\lib\\windows\\vs2013\\x86\\msvcp120d.dll", self.game_dir + self.ds + self.build_folder + self.ds + self.output + "\\Debug\\msvcp120d.dll");
+			#shutil.copy(self.ark2d_dir + "\\lib\\windows\\vs2013\\x86\\msvcr120d.dll", self.game_dir + self.ds + self.build_folder + self.ds + self.output + "\\Debug\\msvcr120d.dll");
+			shutil.copy(self.ark2d_dir + "\\lib\\windows\\vs2017\\x86\\msvcp140d.dll", self.game_dir + self.ds + self.build_folder + self.ds + self.output + "\\Debug\\msvcp140d.dll");
+			shutil.copy(self.ark2d_dir + "\\lib\\windows\\vs2017\\x86\\vcruntime140d.dll", self.game_dir + self.ds + self.build_folder + self.ds + self.output + "\\Debug\\vcruntime140d.dll");
 			#shutil.copy(self.ark2d_dir + "\\lib\\windows\\vs2013\\x86\\msvcr120.dll", self.game_dir + self.ds + self.build_folder + self.ds + self.output + "\\Debug\\msvcr120.dll");
 			#shutil.copy(self.ark2d_dir + "\\lib\\windows\\vs2013\\x86\\msvcp120.dll", self.game_dir + self.ds + self.build_folder + self.ds + self.output + "\\Debug\\msvcp120.dll");
 			shutil.copy(self.ark2d_dir + "\\lib\\windows\\angelscript\\angelscriptd.dll", self.game_dir + self.ds + self.build_folder + self.ds + self.output + "\\Debug\\angelscriptd.dll");
@@ -1714,8 +1717,9 @@ class Builder:
 			shutil.copy(self.ark2d_dir + "\\lib\\windows\\wrap_oal.dll", self.game_dir + self.ds + self.build_folder + self.ds + self.output + "\\Release\\wrap_oal.dll");
 			shutil.copy(self.ark2d_dir + "\\lib\\windows\\zlib1.dll", self.game_dir + self.ds + self.build_folder + self.ds + self.output + "\\Release\\zlib1.dll");
 			shutil.copy(self.ark2d_dir + "\\lib\\windows\\OpenAL32.dll", self.game_dir + self.ds + self.build_folder + self.ds + self.output + "\\Release\\OpenAL32.dll");
-			shutil.copy(self.ark2d_dir + "\\lib\\windows\\vs2013\\x86\\msvcr120.dll", self.game_dir + self.ds + self.build_folder + self.ds + self.output + "\\Release\\msvcr120.dll");
-			shutil.copy(self.ark2d_dir + "\\lib\\windows\\vs2013\\x86\\msvcp120.dll", self.game_dir + self.ds + self.build_folder + self.ds + self.output + "\\Release\\msvcp120.dll");
+			#shutil.copy(self.ark2d_dir + "\\lib\\windows\\vs2013\\x86\\msvcr120.dll", self.game_dir + self.ds + self.build_folder + self.ds + self.output + "\\Release\\msvcr120.dll");
+			shutil.copy(self.ark2d_dir + "\\lib\\windows\\vs2017\\x86\\msvcp140.dll", self.game_dir + self.ds + self.build_folder + self.ds + self.output + "\\Release\\msvcp140.dll");
+			shutil.copy(self.ark2d_dir + "\\lib\\windows\\vs2017\\x86\\vcruntime140.dll", self.game_dir + self.ds + self.build_folder + self.ds + self.output + "\\Release\\vcruntime140.dll");
 			shutil.copy(self.ark2d_dir + "\\lib\\windows\\angelscript\\angelscript.dll", self.game_dir + self.ds + self.build_folder + self.ds + self.output + "\\Release\\angelscript.dll");
 
 			# copy any other dll dependencies..
