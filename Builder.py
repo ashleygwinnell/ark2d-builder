@@ -631,7 +631,7 @@ class Builder:
 			image_resources = [];
 			audio_resources = [];
 			document_resources = [];
-			filesToCopy = self.listFiles(game_resources_dir, False);
+			filesToCopy = util.listFiles(game_resources_dir, False);
 			#print(filesToCopy);
 			for file in filesToCopy:
 				fromfile = game_resources_dir + self.ds + file;
@@ -1061,7 +1061,7 @@ class Builder:
 			image_resources = [];
 			audio_resources = [];
 			document_resources = [];
-			filesToCopy = self.listFiles(self.game_resources_dir, False);
+			filesToCopy = util.listFiles(self.game_resources_dir, False);
 			#print(filesToCopy);
 			for file in filesToCopy:
 				fromfile = self.game_resources_dir + self.ds + file;
@@ -1546,7 +1546,7 @@ class Builder:
 			image_resources = [];
 			audio_resources = [];
 			document_resources = [];
-			filesToCopy = self.listFiles(game_resources_dir, False);
+			filesToCopy = util.listFiles(game_resources_dir, False);
 			#print(filesToCopy);
 			for file in filesToCopy:
 				fromfile = game_resources_dir + self.ds + file;
@@ -2708,11 +2708,11 @@ clean:
 			#mkdirs.extend([ flascc_folder+"/gamevfs/compiled" ]);
 			util.makeDirectories(mkdirs);
 
-			directoriesToCreate = self.listDirectories(game_resources_dir, False);
+			directoriesToCreate = util.listDirectories(game_resources_dir, False);
 			for dir in directoriesToCreate:
 				util.makeDirectories([game_dir + "/build/flascc/data/" + dir]);
 
-			moreDirectoriesToCreate = self.listDirectories(game_dir+"/src", False);
+			moreDirectoriesToCreate = util.listDirectories(game_dir+"/src", False);
 			for dir in moreDirectoriesToCreate:
 				util.makeDirectories([game_dir + "/build/flascc/src/" + dir]);
 
@@ -2742,7 +2742,7 @@ clean:
 			print("----------");
 			print("Cool, now copying (game) files");
 			print("----------");
-			filesToCopy = self.listFiles(game_resources_dir, False);
+			filesToCopy = util.listFiles(game_resources_dir, False);
 			print(filesToCopy);
 			for file in filesToCopy:
 				fromfile = game_resources_dir + self.ds + file;
@@ -2984,7 +2984,7 @@ build:
 			mkdirs.extend([root_dir + "/build/" + self.output + "/data/ark2d"]);
 			mkdirs.extend([root_dir + "/data/ark2d"]);
 
-			directoriesToCreate = self.listDirectories(root_dir + "/src/", False);
+			directoriesToCreate = util.listDirectories(root_dir + "/src/", False);
 			for dir in directoriesToCreate:
 				util.makeDirectories([root_dir + "/build/" + self.output + "/src/" + dir]);
 
@@ -3226,7 +3226,7 @@ build:
 			mkdirs.extend([root_dir + "/build/html5/data/ark2d"]);
 			#mkdirs.extend([root_dir + "/build/html5/src/states"]); # TODO: read src dir and include any dirs here.
 
-		game_src_dirs = self.listDirectories(root_dir+"/src", False);
+		game_src_dirs = util.listDirectories(root_dir+"/src", False);
 		#print('game_src_dirs ');
 		#print(game_src_dirs);
 		for dir in game_src_dirs:
@@ -3453,7 +3453,7 @@ build:
 
 			#executableStr += " --preload-file ./data/ark2d/fonts/default.fnt "
 			#####
-			filesToBundle = self.listFiles(root_dir + self.ds + self.build_folder + self.ds + self.platform + self.ds + "data", False);
+			filesToBundle = util.listFiles(root_dir + self.ds + self.build_folder + self.ds + self.platform + self.ds + "data", False);
 			#print(filesToBundle);
 			for file in filesToBundle:
 				thefile = "./data/" + file;
@@ -3483,41 +3483,7 @@ build:
 
 		return;
 
-	def listDirectories(self, dir, usefullname=True, appendStr = ""):
-		thelist = [];
-		for name in os.listdir(dir):
-			full_name = os.path.join(dir, name);
 
-			#thelist.extend([full_name]);
-			if os.path.isdir(full_name):
-				if usefullname==True:
-					thelist.extend([appendStr + full_name]);
-				else:
-					thelist.extend([appendStr + name]);
-
-				#thelist.extend([full_name]);
-				thelist.extend(self.listDirectories(full_name, usefullname, appendStr+name+self.ds));
-			#else:
-			#	os.remove(full_name);
-		return thelist;
-
-	def listFiles(self, dir, usefullname=True, appendStr = ""):
-		thelist = [];
-		for name in os.listdir(dir):
-			if (util.get_str_extension(name) == "DS_Store"):
-				continue;
-
-			full_name = os.path.join(dir, name);
-			#print(full_name);
-
-			if os.path.isdir(full_name):
-				thelist.extend(self.listFiles(full_name, usefullname, appendStr+name+self.ds));
-			else:
-				if usefullname==True:
-					thelist.extend([appendStr + full_name]);
-				else:
-					thelist.extend([appendStr + name]);
-		return thelist;
 
 
 
@@ -3565,7 +3531,7 @@ build:
 			fchanged = False;
 
 			print("Start copying files...")
-			filesToCopy = self.listFiles(game_resources_dir, False);
+			filesToCopy = util.listFiles(game_resources_dir, False);
 			print(filesToCopy);
 			for file in filesToCopy:
 				fromfile = game_resources_dir + self.ds + file;
@@ -3605,9 +3571,12 @@ build:
 		if ("resources" in self.config and "strings" in self.config["resources"]):
 
 			print("Generating Strings files...");
+			self.config["resources"]["strings"]["source"] = util.str_replace(self.config["resources"]["strings"]["source"], self.tag_replacements);
 
 			if (sys.platform == "win32"):
-				print("TODO win32");
+				stringsJSON = str(json.dumps(self.config["resources"]["strings"], separators=(',',':')));#.replace("\"", "\\\"");
+				subprocess.call(["python", self.ark2d_dir + r"/__preproduction/polyglot/build.py", stringsJSON], shell=True);
+
 			else:
 				stringsJSON = str(json.dumps(self.config["resources"]["strings"], separators=(',',':')));#.replace("\"", "\\\"");
 				compileLine = r"python " + self.ark2d_dir + r"/__preproduction/polyglot/build.py '" + stringsJSON + r"' ";
@@ -5198,7 +5167,7 @@ build:
 
 			# making asset directories
 			print("Making new asset directories");
-			directoriesToCreate = self.listDirectories(self.game_resources_dir, False);
+			directoriesToCreate = util.listDirectories(self.game_resources_dir, False);
 			for dir in directoriesToCreate:
 				util.makeDirectories([project_assets_dir + self.ds + dir]);
 
@@ -5211,7 +5180,7 @@ build:
 			fchanged = False;
 
 			print("Cool, now copying files")
-			filesToCopy = self.listFiles(self.game_resources_dir, False);
+			filesToCopy = util.listFiles(self.game_resources_dir, False);
 			print(filesToCopy);
 			for file in filesToCopy:
 				fromfile = self.game_resources_dir + self.ds + file;

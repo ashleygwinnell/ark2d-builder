@@ -120,6 +120,7 @@ if __name__ == "__main__":
 	onlyassets = False;
 	newconfig = False;
 	compileproj = False;
+	selecttarget = False;
 
 	count = 0;
 	print("Args: " + str(len(sys.argv)));
@@ -177,6 +178,12 @@ if __name__ == "__main__":
 			else:
 				compileproj = False;
 
+		elif parts[0] == "selecttarget":
+			if(parts[1] == "true"):
+				selecttarget = True;
+			else:
+				selecttarget = False;
+
 		count += 1;
 
 	print("---");
@@ -207,7 +214,7 @@ if __name__ == "__main__":
 		if (ark2d_dir[len(ark2d_dir)-2:len(ark2d_dir)] == ".."):
 			ark2d_dir = ark2d_dir[0:ark2d_dir.rfind("\\")];
 
-	if (newconfig and type == "game"):
+	if ((newconfig or selecttarget) and type == "game"):
 		try:
 			if (use_dir == False):
 				dir = os.getcwd();
@@ -232,6 +239,35 @@ if __name__ == "__main__":
 			f.close();
 			game_config = json.loads(fcontents);
 			print("Done.");
+
+			if (selecttarget == True):
+				print("---");
+				print("Select compile target:");
+
+				targetConfigsDirectory = dir + "/configs/";
+				targetConfigsPre = util.listFiles(targetConfigsDirectory);
+
+				targetConfigsPost = [];
+				for tc in targetConfigsPre:
+					tcn = util.get_str_filename2(tc);
+					if (tcn == "game.json"):
+						continue;
+					else:
+						targetConfigsPost.extend([tcn]);
+
+				tcindex = 0;
+				for tc in targetConfigsPost:
+					print("" + str(tcindex+1)+ ". " + tc);
+					tcindex += 1;
+
+				t = raw_input("> ")
+				target = targetConfigsPost[int(t)-1];
+
+				print("Clean? [Y/N]");
+				t = raw_input("> ");
+				clean = True if t == "Y" else False;
+
+
 
 			print("---");
 			print("Opening target config file: ");

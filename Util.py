@@ -44,6 +44,15 @@ class Util:
 		filename = str[findex+1:len(str)];
 		return filename;
 
+	def replace_str_extension(self, str, ext):
+		findex = str.rfind('.');
+		h_ext = str[findex+1:len(str)];
+		newfh = str[0:findex] + "." + ext;
+		return newfh;
+
+	def file_exists(self, f):
+		return (os.path.exists(f));
+
 	def is_image_extension(self, ext):
 		if (ext == "png" or ext == "tga" or ext == "bmp" or ext == "gif" or ext == "jpg" or ext == "pkm_png"):
 			return True;
@@ -73,3 +82,45 @@ class Util:
 			f1.close();
 		else:
 			print("Skipping " + source + " file as hashes match.");
+
+	def listFiles(self, dir, usefullname=True, appendStr = ""):
+		ds = self.getDirectorySeparator();
+
+		thelist = [];
+		for name in os.listdir(dir):
+			if (self.get_str_extension(name) == "DS_Store"):
+				continue;
+
+			full_name = os.path.join(dir, name);
+			#print(full_name);
+
+			if os.path.isdir(full_name):
+				thelist.extend(self.listFiles(full_name, usefullname, appendStr + name + ds));
+			else:
+				if usefullname==True:
+					thelist.extend([appendStr + full_name]);
+				else:
+					thelist.extend([appendStr + name]);
+		return thelist;
+
+	def listDirectories(self, dir, usefullname=True, appendStr = ""):
+		ds = self.getDirectorySeparator();
+
+		thelist = [];
+		for name in os.listdir(dir):
+			full_name = os.path.join(dir, name);
+
+			#thelist.extend([full_name]);
+			if os.path.isdir(full_name):
+				if usefullname==True:
+					thelist.extend([appendStr + full_name]);
+				else:
+					thelist.extend([appendStr + name]);
+
+				#thelist.extend([full_name]);
+				thelist.extend(self.listDirectories(full_name, usefullname, appendStr + name + ds));
+			#else:
+			#	os.remove(full_name);
+		return thelist;
+
+
