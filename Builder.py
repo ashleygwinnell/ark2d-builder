@@ -40,7 +40,6 @@ class Builder:
 
 		self.ouya = False;
 		self.firetv = False;
-
 		if ((len(sys.argv)==3 and sys.argv[2] == "android") or (len(sys.argv)==2 and sys.argv[1] == "android")):
 			self.platform = "android";
 			if (sys.platform == "win32"):
@@ -51,7 +50,7 @@ class Builder:
 				self.ds = "/";
 			pass;
 
-		elif ((len(sys.argv)==3 and sys.argv[2] == "iphone") or (len(sys.argv)==2 and sys.argv[1] == "iphone")):
+		elif ((len(sys.argv)==3 and sys.argv[2] == "iphone") or (len(sys.argv)==2 and "iphone" in sys.argv[1])):
 			self.platform = "ios";
 			self.ds = "/";
 
@@ -3715,7 +3714,7 @@ build:
 		f.close();
 		ark2dconfig = json.loads(fcontents);
 
-		ds([self.game_dir + self.ds + self.build_folder + self.ds + self.output]);
+		util.makeDirectories([self.game_dir + self.ds + self.build_folder + self.ds + self.output]);
 
 		gyp_executable = ark2dconfig['osx']['gyp_executable']; #"/Users/ashleygwinnell/Documents/gyp-read-only/gyp";
 
@@ -3749,7 +3748,7 @@ build:
 			gypfiletarget['dependencies'] = [];
 			gypfiletarget['conditions'] = [];
 			gypfiletargetcondition = {};
-			gypfiletargetcondition['defines'] = ['ARK2D_IPHONE', "ARK2D_IOS"]; #, 'CF_EXCLUDE_CSTD_HEADERS'];
+			gypfiletargetcondition['defines'] = ['ARK2D_IPHONE', "ARK2D_IOS", "PNG_ARM_NEON_OPT=0"]; #, 'CF_EXCLUDE_CSTD_HEADERS'];
 
 			if self.debug:
 				gypfiletargetcondition['defines'].extend(["ARK2D_DEBUG"]);
@@ -3806,7 +3805,7 @@ build:
 			gypfiletargetcondition['xcode_settings']['CLANG_CXX_LANGUAGE_STANDARD'] = "c++0x";
 			gypfiletargetcondition['xcode_settings']['CLANG_CXX_LIBRARY'] = "libc++";
 			gypfiletargetcondition['xcode_settings']['GCC_C_LANGUAGE_STANDARD'] = "c11";
-			gypfiletargetcondition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] = "ARK2D_IPHONE;ARK2D_IOS";
+			gypfiletargetcondition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] = "ARK2D_IPHONE;ARK2D_IOS;PNG_ARM_NEON_OPT=0";
 			gypfiletargetcondition['xcode_settings']['GCC_OPTIMIZATION_LEVEL'] = "0";
 
 			if self.debug:
@@ -3966,7 +3965,7 @@ build:
 			gypfiletarget['dependencies'] = [];
 			gypfiletarget['conditions'] = [];
 			gypfiletargetcondition = {};
-			gypfiletargetcondition['defines'] = ['ARK2D_IPHONE', 'ARK2D_IOS']; #, 'CF_EXCLUDE_CSTD_HEADERS'];
+			gypfiletargetcondition['defines'] = ['ARK2D_IPHONE', 'ARK2D_IOS', 'PNG_ARM_NEON_OPT=0']; #, 'CF_EXCLUDE_CSTD_HEADERS'];
 
 			if self.debug:
 				gypfiletargetcondition['defines'].extend(["ARK2D_DEBUG"]);
@@ -3989,10 +3988,10 @@ build:
 	          	'$(SDKROOT)/System/Library/Frameworks/OpenGLES.framework',
 	          	'$(SDKROOT)/System/Library/Frameworks/UIKit.framework',
 	          	'$(SDKROOT)/System/Library/Frameworks/StoreKit.framework',
-	          	self.ark2d_dir + '/lib/iphone/libfreetype.a',
+	          	#self.ark2d_dir + '/lib/iphone/libfreetype.a',
 	          	self.ark2d_dir + '/lib/iphone/libangelscriptd.a',
-	          	self.ark2d_dir + '/lib/iphone/libGoogleAnalyticsServices.a',
 	          	'libsqlite3.tbd', #requried for GA
+	          	self.ark2d_dir + '/lib/iphone/libGoogleAnalyticsServices.a',
 	          	self.ark2d_dir + '/build/ios/DerivedData/ark2d/Build/Products/Default-iphoneos/libark2d-iPhone.a'
 			];
 
@@ -4039,7 +4038,7 @@ build:
 			gypfiletargetcondition['xcode_settings']['CLANG_CXX_LANGUAGE_STANDARD'] = "c++0x";
 			gypfiletargetcondition['xcode_settings']['CLANG_CXX_LIBRARY'] = "libc++";
 			gypfiletargetcondition['xcode_settings']['GCC_C_LANGUAGE_STANDARD'] = "c11";
-			gypfiletargetcondition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] = "ARK2D_IPHONE;ARK2D_IOS";
+			gypfiletargetcondition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] = "ARK2D_IPHONE;ARK2D_IOS;PNG_ARM_NEON_OPT=0";
 			gypfiletargetcondition['xcode_settings']['GCC_OPTIMIZATION_LEVEL'] = "0";
 
 			if self.debug:

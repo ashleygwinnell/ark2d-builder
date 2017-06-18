@@ -487,6 +487,7 @@ if __name__ == "__main__":
 
 		print("---");
 		print("Building Library");
+		print("Target: " + target);
 
 		a = Builder();
 		a.compileproj = compileproj;
