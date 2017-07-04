@@ -3210,8 +3210,8 @@ build:
 		root_dir = self.ark_config[self.platformOn]['ark2d_dir'] if self.building_library else self.game_dir;
 		emscripten_dir = self.ark_config['html5'][self.platformOn]['emscripten_dir'] if self.building_library else self.target_config['html5'][self.platformOn]['emscripten_dir'];
 		emscripten_version = self.ark_config['html5'][self.platformOn]['emscripten_version'] if self.building_library else self.target_config['html5'][self.platformOn]['emscripten_version'];
-		em_gcc = emscripten_dir + self.ds + "emscripten" + self.ds + emscripten_version + self.ds + "emcc";
-		em_gpp = emscripten_dir + self.ds + "emscripten" + self.ds + emscripten_version + self.ds + "em++";
+		em_gcc = "python " + emscripten_dir + self.ds + "emscripten" + self.ds + emscripten_version + self.ds + "emcc";
+		em_gpp = "python " + emscripten_dir + self.ds + "emscripten" + self.ds + emscripten_version + self.ds + "em++";
 
 		print("-------------------------");
 		print("Make directories...")
@@ -3295,7 +3295,7 @@ build:
 			#compileStr += " -s TOTAL_MEMORY=16777216 "
 			compileStr += " -s TOTAL_MEMORY=134217728 ";
 			compileStr += " -s USE_PTHREADS=0 ";
-			compileStr += " -s EXPORTED_FUNCTIONS=\"['_main','emscripten_run_thread','_emscripten_run_thread']\" ";
+			compileStr += " -s EXPORTED_FUNCTIONS=\"['_main','_emscripten_run_thread', '_emscripten_gamepadConnected', '_emscripten_containerSetSize']\" ";
 			compileStr += " -s ASSERTIONS=1 ";
 			compileStr += " -O2 ";
 
@@ -3306,6 +3306,7 @@ build:
 			compileStr += " -I " + self.ark2d_dir + "/src/ARK2D/vendor/iphone ";
 			compileStr += " -I " + self.ark2d_dir + "/src/ARK2D/vendor/spine/includes ";
 			compileStr += " -I " + self.ark2d_dir + "/src/ARK2D/vendor/angelscript ";
+			compileStr += " -I " + self.ark2d_dir + "/src/ARK2D/vendor/zlib123 ";
 
 			if self.building_game:
 				if "include_dirs" in self.game_config:
@@ -3342,7 +3343,7 @@ build:
 			#if (not self.debug):
 
 			linkStr += " -s DEMANGLE_SUPPORT=1 ";
-			linkStr += " -s EXPORTED_FUNCTIONS=\"['_main','emscripten_run_thread','_emscripten_run_thread']\" ";
+			linkStr += " -s EXPORTED_FUNCTIONS=\"['_main','_emscripten_run_thread', '_emscripten_gamepadConnected', '_emscripten_containerSetSize']\" ";
 			linkStr += " -s ASSERTIONS=1 ";
 			linkStr += " -O2 ";
 			linkStr += " -o " + self.ark2d_dir + self.ds + "build/html5/libark2d.bc ";
@@ -3370,7 +3371,7 @@ build:
 				linkStr += em_gcc + " -s FULL_ES2=1 ";
 				#if (not self.debug):
 				linkStr += " -s DEMANGLE_SUPPORT=1 ";
-				linkStr += " -s EXPORTED_FUNCTIONS=\"['_main','emscripten_run_thread','_emscripten_run_thread']\" ";
+				linkStr += " -s EXPORTED_FUNCTIONS=\"['_main','_emscripten_run_thread', '_emscripten_gamepadConnected', '_emscripten_containerSetSize']\" ";
 				linkStr += " -s ASSERTIONS=1 ";
 				linkStr += " -O2 ";
 				linkStr += " -o " + self.ark2d_dir + self.ds + "build/html5/libark2d_"+moduleName+".bc ";
@@ -3420,7 +3421,7 @@ build:
 			executableStr += " -s FULL_ES2=1 ";
 			executableStr += " -s DEMANGLE_SUPPORT=1 ";
 			executableStr += " -s TOTAL_MEMORY=134217728 ";
-			executableStr += " -s EXPORTED_FUNCTIONS=\"['_main','emscripten_run_thread','_emscripten_run_thread']\" ";
+			executableStr += " -s EXPORTED_FUNCTIONS=\"['_main','_emscripten_run_thread', '_emscripten_gamepadConnected', '_emscripten_containerSetSize']\" ";
 			executableStr += " -s ASSERTIONS=1 ";
 			executableStr += " -O2 ";
 			executableStr += "-o " + root_dir + self.ds + "build/html5/game.html ";
@@ -3440,6 +3441,11 @@ build:
 			else:
 				for module in self.target_config['modules']:
 					executableStr +=  root_dir + "/build/html5/libark2d_" + module + ".bc ";
+
+			if "libs" in self.target_config:
+				for lib in self.target_config['libs']:
+					executableStr +=  root_dir + "/" + lib + " ";
+
 
 			executableStr += " -Wl ";
 			executableStr += " --memory-init-file 1  ";
@@ -3544,7 +3550,15 @@ build:
 					file_ext = util.get_str_extension(file);
 					if (file_ext == "ogg"): # resample
 						print("resampling audio file from: " + fromfile + " to: " + tofile);
-						subprocess.call(["oggdec "+fromfile+" --quiet --output=- | oggenc --raw --quiet --quality=" + str(audio_quality) + " --output="+tofile+" -"], shell=True);
+						code = subprocess.call([self.ark2d_dir +  "/../Tools/oggdec "+fromfile+" --quiet --output=- | " + self.ark2d_dir +  "/../Tools/oggenc --raw --quiet --quality=" + str(audio_quality) + " --output="+tofile+" -"], shell=True);
+						if code != 0:
+							print('could not copy ogg.');
+							print('macOS help:');
+							print('	* install brew:');
+							print('	/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"');
+							print('	* install vorbis-tools:');
+							print('	brew install vorbis-tools');
+							exit();
 					else: # standard copy
 						print("copying file from: " + fromfile + " to: " + tofile);
 
@@ -4067,6 +4081,7 @@ build:
 
 				"Icon-76.png", 			#ios7
 				"Icon-152.png", 		#ios7
+				"Icon-167.png", 		#ios...9?
 
 				"iTunesArtwork", 		#app-store-icon
 				"iTunesArtwork@2x", 	#app-store-icon-retina
@@ -4266,6 +4281,7 @@ build:
 			info_plist_contents += '		<string>Icon-120.png</string>' + nl;				#ios7
 			info_plist_contents += '		<string>Icon-76.png</string>' + nl;					#ios7
 			info_plist_contents += '		<string>Icon-152.png</string>' + nl;				#ios7
+			info_plist_contents += '		<string>Icon-167.png</string>' + nl;				#ios7
 			info_plist_contents += '	</array>' + nl;
 
 			info_plist_contents += '	<key>CFBundleIcons</key>' + nl;
@@ -4288,6 +4304,7 @@ build:
 			info_plist_contents += '				<string>Icon-120.png</string>' + nl;				#ios7
 			info_plist_contents += '				<string>Icon-76.png</string>' + nl;					#ios7
 			info_plist_contents += '				<string>Icon-152.png</string>' + nl;				#ios7
+			info_plist_contents += '				<string>Icon-167.png</string>' + nl;				#ios7
 			info_plist_contents += '			</array>' + nl;
 
 			info_plist_contents += '			<key>UIPrerenderedIcon</key>' + nl;
