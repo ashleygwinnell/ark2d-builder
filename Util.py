@@ -12,6 +12,18 @@ class Util:
 			str = str.replace(search, replace);
 		return str;
 
+	def underscoresToCamelCase(self, str):
+		bits = str.split("_")
+		str = "";
+		bitIndex = 0;
+		for bit in bits:
+			if bitIndex > 0:
+				bit = bit.capitalize();
+			str += bit;
+			bitIndex += 1;
+		return str;
+
+
 	def makeDirectories(self, dir):
 		for thisstr in dir:
 			print("mkdir " + thisstr);
