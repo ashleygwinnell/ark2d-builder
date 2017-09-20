@@ -2226,7 +2226,7 @@ class Builder:
 					compileStr += " -O3 -Wall -c -fmessage-length=0 ";
 					if (sys.platform == "darwin"): #compiling on mac
 						if not "vendor" in newf:
-							compileStr += " -mmacosx-version-min=10.6 -DARK2D_MACINTOSH -DARK2D_DESKTOP -DMAC_OS_X_VERSION_MIN_REQUIRED=1060 -x objective-c++  ";
+							compileStr += " -mmacosx-version-min=10.6 -DARK2D_MACINTOSH -DARK2D_DESKTOP -DMAC_OS_X_VERSION_MIN_REQUIRED=1060 -x objective-c++ -fembed-bitcode ";
 
 							# warnings
 							compileStr += " -Wall -Winit-self -Woverloaded-virtual -Wuninitialized  "; #  -Wold-style-cast -Wmissing-declarations
@@ -3528,14 +3528,15 @@ build:
 			# define variables
 			game_dir = self.game_dir;
 			game_resources_dir = self.game_resources_dir;
-			audio_quality = 5;
-
+			audio_quality = 5 if not 'audio_quality' in self.ios_config else self.ios_config['audio_quality'];
+			
 			print("Creating/opening assets cache file...");
 			assetsCache = game_dir + self.ds + "build" + self.ds + self.platform + self.ds + "build-cache" + self.ds + "assets.json";
 			assetsJson = self.openCacheFile(assetsCache);
 			fchanged = False;
 
 			print("Start copying files...")
+			print("audio_quality " + str(audio_quality));
 			filesToCopy = util.listFiles(game_resources_dir, False);
 			print(filesToCopy);
 			for file in filesToCopy:
@@ -3819,7 +3820,7 @@ build:
 			gypfiletargetcondition['xcode_settings']['CLANG_CXX_LANGUAGE_STANDARD'] = "c++0x";
 			gypfiletargetcondition['xcode_settings']['CLANG_CXX_LIBRARY'] = "libc++";
 			gypfiletargetcondition['xcode_settings']['GCC_C_LANGUAGE_STANDARD'] = "c11";
-			gypfiletargetcondition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] = "ARK2D_IPHONE;ARK2D_IOS;PNG_ARM_NEON_OPT=0";
+			gypfiletargetcondition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] = "ARK2D_IPHONE ARK2D_IOS PNG_ARM_NEON_OPT=0";
 			gypfiletargetcondition['xcode_settings']['GCC_OPTIMIZATION_LEVEL'] = "0";
 
 			if self.debug:
@@ -3921,8 +3922,8 @@ build:
 			xcconfigfilecontents += "HEADERMAP_INCLUDES_PROJECT_HEADERS = NO;" + nl;
 			xcconfigfilecontents += "HEADERMAP_INCLUDES_FRAMEWORK_ENTRIES_FOR_ALL_PRODUCT_TYPES = NO;" + nl;
 			xcconfigfilecontents += "ALWAYS_SEARCH_USER_PATHS = NO;" + nl;
-			xcconfigfilecontents += "OTHER_CFLAGS = -x objective-c;" + nl;
-			xcconfigfilecontents += "OTHER_CPLUSPLUSFLAGS = -x objective-c++;" + nl;
+			xcconfigfilecontents += "OTHER_CFLAGS = -x objective-c -fembed-bitcode;" + nl;
+			xcconfigfilecontents += "OTHER_CPLUSPLUSFLAGS = -x objective-c++ -fembed-bitcode;" + nl;
 
 
 
@@ -4004,7 +4005,7 @@ build:
 	          	'$(SDKROOT)/System/Library/Frameworks/StoreKit.framework',
 	          	#self.ark2d_dir + '/lib/iphone/libfreetype.a',
 	          	self.ark2d_dir + '/lib/iphone/libangelscriptd.a',
-	          	'libsqlite3.tbd', #requried for GA
+	          	'$(SDKROOT)/System/usr/lib/libsqlite3.tbd', #requried for GA
 	          	self.ark2d_dir + '/lib/iphone/libGoogleAnalyticsServices.a',
 	          	self.ark2d_dir + '/build/ios/DerivedData/ark2d/Build/Products/Default-iphoneos/libark2d-iPhone.a'
 			];
@@ -4052,7 +4053,7 @@ build:
 			gypfiletargetcondition['xcode_settings']['CLANG_CXX_LANGUAGE_STANDARD'] = "c++0x";
 			gypfiletargetcondition['xcode_settings']['CLANG_CXX_LIBRARY'] = "libc++";
 			gypfiletargetcondition['xcode_settings']['GCC_C_LANGUAGE_STANDARD'] = "c11";
-			gypfiletargetcondition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] = "ARK2D_IPHONE;ARK2D_IOS;PNG_ARM_NEON_OPT=0";
+			gypfiletargetcondition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] = "ARK2D_IPHONE ARK2D_IOS PNG_ARM_NEON_OPT=0";
 			gypfiletargetcondition['xcode_settings']['GCC_OPTIMIZATION_LEVEL'] = "0";
 
 			if self.debug:
@@ -4086,6 +4087,8 @@ build:
 				"iTunesArtwork", 		#app-store-icon
 				"iTunesArtwork@2x", 	#app-store-icon-retina
 			];
+			if "icloud" in self.ios_config and self.ios_config["icloud"] == True:
+				gypfiletargetcondition['mac_bundle_resources'].extend(["Settings.bundle"]);
 
 			iphonecondition = [];
 			iphonecondition.extend(["OS == 'mac'"]);
@@ -4350,6 +4353,10 @@ build:
 
 			info_plist_contents += '	<key>UIStatusBarHidden</key>' + nl;
 			info_plist_contents += '	<true/>' + nl;
+
+			info_plist_contents += '	<key>UIRequiresFullScreen</key>' + nl;
+			info_plist_contents += '	<true/>' + nl;
+
 			info_plist_contents += '	<key>UISupportedInterfaceOrientations</key>' + nl;
 			info_plist_contents += '	<array>' + nl;
 			if (self.game_orientation == "portrait"):
@@ -4358,6 +4365,14 @@ build:
 				info_plist_contents += '	<string>UIInterfaceOrientationLandscapeRight</string>' + nl;
 
 			info_plist_contents += '	</array>' + nl;
+
+			info_plist_contents += '	<key>NSAppTransportSecurity</key>' + nl;
+			info_plist_contents += '	<dict>' + nl;
+			info_plist_contents += '		<!--Include to allow all connections (DANGER)-->' + nl;
+			info_plist_contents += '		<key>NSAllowsArbitraryLoads</key>' + nl;
+			info_plist_contents += '		<true/>' + nl;
+			info_plist_contents += '	</dict>' + nl;
+
 			info_plist_contents += '</dict>' + nl;
 			info_plist_contents += '</plist>';
 
@@ -4380,8 +4395,8 @@ build:
 			xcconfigfilecontents += "HEADERMAP_INCLUDES_PROJECT_HEADERS = NO;" + nl;
 			xcconfigfilecontents += "HEADERMAP_INCLUDES_FRAMEWORK_ENTRIES_FOR_ALL_PRODUCT_TYPES = NO;" + nl;
 			xcconfigfilecontents += "ALWAYS_SEARCH_USER_PATHS = NO;" + nl;
-			xcconfigfilecontents += "OTHER_CFLAGS = -x objective-c;" + nl;
-			xcconfigfilecontents += "OTHER_CPLUSPLUSFLAGS = -x objective-c++;" + nl;
+			xcconfigfilecontents += "OTHER_CFLAGS = -x objective-c -fembed-bitcode;" + nl;
+			xcconfigfilecontents += "OTHER_CPLUSPLUSFLAGS = -x objective-c++ -fembed-bitcode;" + nl;
 			xcconfigfilecontents += "OTHER_LDFLAGS = -lbz2 -lcurl -lz;" + nl;
 			xcconfigfilecontents += "INFOPLIST_FILE = " + info_plist_filename;
 
@@ -4390,6 +4405,57 @@ build:
 			f = open(xcconfigfile, "w")
 			f.write(xcconfigfilecontents);
 			f.close();
+
+			# build settings bundle file. 
+			print("generating Settings.bundle file...");
+			xc_settings_folder = self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds + "Settings.bundle";
+			util.makeDirectories([xc_settings_folder]);
+			util.makeDirectories([xc_settings_folder + self.ds + "en.lproj"]);
+
+			xc_settings_rootstrings_file = xc_settings_folder + self.ds + "en.lproj" + self.ds + "Root.strings";
+			xc_settings_rootstrings_contents = "/* A single strings file, whose title is specified in your preferences schema. The strings files provide the localized content to display to the user for each of your preferences. */" + nl;
+			xc_settings_rootstrings_contents = "/* Warning: generating by ark2d-build */" + nl;
+			xc_settings_rootstrings_contents += "\"Group\" = \"Group\";" + nl;
+			xc_settings_rootstrings_contents += "\"General\" = \"General\";" + nl;
+			xc_settings_rootstrings_contents += "\"iCloud\" = \"iCloud\";" + nl;
+			xc_settings_rootstrings_contents += "\"Name\" = \"Name\";" + nl;
+			xc_settings_rootstrings_contents += "\"none given\" = \"none given\";" + nl;
+			xc_settings_rootstrings_contents += "\"Enabled\" = \"Enabled\";" + nl;
+			f = open(xc_settings_rootstrings_file, "w"); f.write(xc_settings_rootstrings_contents); f.close();
+
+			xc_settings_rootplist_file = xc_settings_folder + self.ds + "Root.plist";
+			xc_settings_rootplist_contents = "";
+			xc_settings_rootplist_contents += '<?xml version="1.0" encoding="UTF-8"?>' + nl;
+			xc_settings_rootplist_contents += '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' + nl;
+			xc_settings_rootplist_contents += '<plist version="1.0">' + nl;
+			xc_settings_rootplist_contents += '<dict>' + nl;
+			xc_settings_rootplist_contents += '	<key>StringsTable</key>' + nl;
+			xc_settings_rootplist_contents += '	<string>Root</string>' + nl;
+			xc_settings_rootplist_contents += '	<key>PreferenceSpecifiers</key>' + nl;
+			xc_settings_rootplist_contents += '	<array>' + nl;
+			xc_settings_rootplist_contents += '		<dict>' + nl;
+			xc_settings_rootplist_contents += '			<key>Type</key>' + nl;
+			xc_settings_rootplist_contents += '			<string>PSGroupSpecifier</string>' + nl;
+			xc_settings_rootplist_contents += '			<key>Title</key>' + nl;
+			xc_settings_rootplist_contents += '			<string>General</string>' + nl;
+			xc_settings_rootplist_contents += '		</dict>' + nl;
+
+			if "icloud" in self.ios_config and self.ios_config["icloud"] == True:
+				xc_settings_rootplist_contents += '		<dict>' + nl;
+				xc_settings_rootplist_contents += '			<key>Type</key>' + nl;
+				xc_settings_rootplist_contents += '			<string>PSToggleSwitchSpecifier</string>' + nl;
+				xc_settings_rootplist_contents += '			<key>Title</key>' + nl;
+				xc_settings_rootplist_contents += '			<string>iCloud</string>' + nl;
+				xc_settings_rootplist_contents += '			<key>Key</key>' + nl;
+				xc_settings_rootplist_contents += '			<string>setting_icloud</string>' + nl;
+				xc_settings_rootplist_contents += '			<key>DefaultValue</key>' + nl;
+				xc_settings_rootplist_contents += '			<true/>' + nl;
+				xc_settings_rootplist_contents += '		</dict>' + nl;
+
+			xc_settings_rootplist_contents += '	</array>' + nl;
+			xc_settings_rootplist_contents += '</dict>' + nl;
+			xc_settings_rootplist_contents += '</plist>' + nl;
+			f = open(xc_settings_rootplist_file, "w"); f.write(xc_settings_rootplist_contents); f.close();
 
 			# copy game resources in to project data folder.
 			#subprocess.call(["cp -r " + config['osx']['game_resources_dir'] + " " + self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds + "data/"], shell=True); #libark2d
@@ -4773,7 +4839,7 @@ build:
 			# -mmacosx-version-min=10.5
 			if ("vendor" not in srcFile):
 				compileStr += " -O3 -march=i386 -pipe -gdwarf-2 -no-cpp-precomp -mthumb -isysroot " + varSDKROOT + " -m" + self.varPLATFORMsml + "-version-min=" + varMINVERSION + "  ";
-				compileStr += " -x objective-c++ ";
+				compileStr += " -x objective-c++ -fembed-bitcode ";
 				compileStr += "  -Wno-trigraphs -fpascal-strings -Wmissing-prototypes -Wreturn-type -Wunused-variable -DDEBUG=1 -fexceptions -fasm-blocks -fobjc-abi-version=2 -fobjc-legacy-dispatch ";
 			else:
 				compileStr += " -arch i386 ";
@@ -5062,6 +5128,7 @@ build:
 			# custom game libraries (fmod, and things)
 			lib_search_path = "";
 			edits_shared_libraries = [];
+			edits_shared_libraries_gradlejars = "";
 			if "native_libraries" in self.android_config:
 				for gamelibrary in self.android_config['native_libraries']:
 					gamelibraryname = gamelibrary['name'];
@@ -5072,6 +5139,7 @@ build:
 					if "jars" in gamelibrary:
 						for gamelibraryjar in gamelibrary['jars']:
 							self.android_libs.extend([gamelibraryjar]);
+							edits_shared_libraries_gradlejars += "compile files('../../../../" + gamelibraryjar + "')\n";
 
 					if "armeabi" in gamelibrary:
 						path = gamelibrary['armeabi'];
@@ -5732,6 +5800,7 @@ build:
 				fcontents = util.str_replace(fcontents, editsOneSignal);
 				fcontents = util.str_replace(fcontents, editsIronsource);
 				fcontents = util.str_replace(fcontents, editsGoogleAnalytics);
+				fcontents = util.str_replace(fcontents, [("%ADDITIONAL_JAR_FILES%", edits_shared_libraries_gradlejars)]);
 				f = open(intellij_folder + self.ds + self.game_name_safe + self.ds + "build.gradle", "w");
 				f.write(fcontents);
 				f.close();

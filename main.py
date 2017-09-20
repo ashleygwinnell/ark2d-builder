@@ -316,19 +316,6 @@ if __name__ == "__main__":
 			a.target_config_file = target;
 			a.target_config = target_config;
 
-			if (onlyspritesheets):
-				a.generateSpriteSheets();
-				exit(0);
-
-			if (onlygeneratestrings):
-				a.generateStrings();
-				exit(0);
-
-			if (clean == True or target_config['clean'] == True):
-				a.clean();
-				#exit(0);
-
-			a.gamePreInit();
 			a.tag_replacements = [
 				("%PREPRODUCTION_DIR%", a.game_preproduction_dir),
 				("%ARK2D_DIR%", a.ark2d_dir),
@@ -344,6 +331,21 @@ if __name__ == "__main__":
 				#("%GAME_WIDTH%", str(0))
 				#("%GAME_HEIGHT%", str(0))
 			];
+
+			if (onlyspritesheets):
+				a.generateSpriteSheets();
+				exit(0);
+
+			if (onlygeneratestrings):
+				a.generateStrings();
+				exit(0);
+
+			if (clean == True or target_config['clean'] == True):
+				a.clean();
+				#exit(0);
+
+			a.gamePreInit();
+			
 
 			a.mingw_link = "";
 
