@@ -3259,6 +3259,7 @@ build:
 			compileStr += " -DARK2D_EMSCRIPTEN_JS ";
 			compileStr += " -DARK2D_DESKTOP ";
 			compileStr += " -DGL_GLEXT_PROTOTYPES ";
+			#compileStr += " EMCC_DEBUG=1 ";
 
 			if (self.building_game):
 				for item in self.target_config['defines']:
@@ -3278,7 +3279,7 @@ build:
 			compileStr += " -Wall -g ";
 
 			#if (not self.debug):
-				#compileStr += " -O2 ";
+				#compileStr += " -O1 ";
 
 			#compileStr += " -v ";
 
@@ -3295,9 +3296,9 @@ build:
 			#compileStr += " -s TOTAL_MEMORY=16777216 "
 			compileStr += " -s TOTAL_MEMORY=134217728 ";
 			compileStr += " -s USE_PTHREADS=0 ";
-			compileStr += " -s EXPORTED_FUNCTIONS=\"['_main','_emscripten_run_thread', '_emscripten_gamepadConnected', '_emscripten_containerSetSize']\" ";
-			compileStr += " -s ASSERTIONS=1 ";
-			compileStr += " -O2 ";
+			compileStr += " -s EXPORTED_FUNCTIONS=\"['_main','_emscripten_run_thread', '_emscripten_gamepadConnected', '_emscripten_containerSetSize', '_AngelScriptUtil_MessageCallback']\" ";
+			compileStr += " -s ASSERTIONS=2 ";
+			compileStr += " -O1 ";
 
 			if self.building_game:
 				compileStr += " -ffunction-sections ";
@@ -3343,9 +3344,9 @@ build:
 			#if (not self.debug):
 
 			linkStr += " -s DEMANGLE_SUPPORT=1 ";
-			linkStr += " -s EXPORTED_FUNCTIONS=\"['_main','_emscripten_run_thread', '_emscripten_gamepadConnected', '_emscripten_containerSetSize']\" ";
-			linkStr += " -s ASSERTIONS=1 ";
-			linkStr += " -O2 ";
+			linkStr += " -s EXPORTED_FUNCTIONS=\"['_main','_emscripten_run_thread', '_emscripten_gamepadConnected', '_emscripten_containerSetSize', '_AngelScriptUtil_MessageCallback']\" ";
+			linkStr += " -s ASSERTIONS=2 ";
+			linkStr += " -O1 ";
 			linkStr += " -o " + self.ark2d_dir + self.ds + "build/html5/libark2d.bc ";
 			for srcFile in self.src_files:
 				srcFileIndex = srcFile.rfind('.');
@@ -3371,9 +3372,9 @@ build:
 				linkStr += em_gcc + " -s FULL_ES2=1 ";
 				#if (not self.debug):
 				linkStr += " -s DEMANGLE_SUPPORT=1 ";
-				linkStr += " -s EXPORTED_FUNCTIONS=\"['_main','_emscripten_run_thread', '_emscripten_gamepadConnected', '_emscripten_containerSetSize']\" ";
-				linkStr += " -s ASSERTIONS=1 ";
-				linkStr += " -O2 ";
+				linkStr += " -s EXPORTED_FUNCTIONS=\"['_main','_emscripten_run_thread', '_emscripten_gamepadConnected', '_emscripten_containerSetSize', '_AngelScriptUtil_MessageCallback']\" ";
+				linkStr += " -s ASSERTIONS=2 ";
+				linkStr += " -O1 ";
 				linkStr += " -o " + self.ark2d_dir + self.ds + "build/html5/libark2d_"+moduleName+".bc ";
 
 				for srcFile in module['sources']:
@@ -3421,9 +3422,9 @@ build:
 			executableStr += " -s FULL_ES2=1 ";
 			executableStr += " -s DEMANGLE_SUPPORT=1 ";
 			executableStr += " -s TOTAL_MEMORY=134217728 ";
-			executableStr += " -s EXPORTED_FUNCTIONS=\"['_main','_emscripten_run_thread', '_emscripten_gamepadConnected', '_emscripten_containerSetSize']\" ";
-			executableStr += " -s ASSERTIONS=1 ";
-			executableStr += " -O2 ";
+			executableStr += " -s EXPORTED_FUNCTIONS=\"['_main','_emscripten_run_thread', '_emscripten_gamepadConnected', '_emscripten_containerSetSize', '_AngelScriptUtil_MessageCallback']\" ";
+			executableStr += " -s ASSERTIONS=2 ";
+			executableStr += " -O1 ";
 			executableStr += "-o " + root_dir + self.ds + "build/html5/game.html ";
 			for srcFile in self.src_files:
 				srcFileIndex = srcFile.rfind('.');
@@ -3444,7 +3445,10 @@ build:
 
 			if "libs" in self.target_config:
 				for lib in self.target_config['libs']:
-					executableStr +=  root_dir + "/" + lib + " ";
+					lib2 = util.str_replace(lib, [("%PREPRODUCTION_DIR%", self.game_preproduction_dir), ("%ARK2D_DIR%", self.ark2d_dir)]);
+					if lib2[0:1] != '/':
+						lib2 = root_dir + "/" + lib2;
+					executableStr += lib2 + " ";
 
 
 			executableStr += " -Wl ";
