@@ -38,6 +38,8 @@ class Builder:
 		self.build_folder = "build";
 		self.arch = platform.machine();
 
+		self.resourceCompiler = "windres";
+
 		self.ouya = False;
 		self.firetv = False;
 		if ((len(sys.argv)==3 and sys.argv[2] == "android") or (len(sys.argv)==2 and sys.argv[1] == "android")):
@@ -120,6 +122,7 @@ class Builder:
 			self.mac_game_icns = '';
 
 		self.windresources = [];
+		self.compilerOptions = "";
 
 		self.mkdirs = [];
 		self.game_mkdirs = [];
@@ -159,21 +162,23 @@ class Builder:
 			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "Core" + self.ds + "Controls",
 			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "Core" + self.ds + "Font",
 			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "Core" + self.ds + "Geometry",
+			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "Core" + self.ds + "Graphics",
+			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "Core" + self.ds + "Graphics" + self.ds + "HLSL",
+			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "Core" + self.ds + "Graphics" + self.ds + "ImageIO",
+			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "Core" + self.ds + "Graphics" + self.ds + "Shaders",
 			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "Core" + self.ds + "Math",
 			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "Core" + self.ds + "Platform",
 			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "Core" + self.ds + "SceneGraph",
 			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "Core" + self.ds + "State",
+			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "Core" + self.ds + "State" + self.ds + "Transition",
 			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "Core" + self.ds + "Threading",
 			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "Core" + self.ds + "Tween",
+			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "Core" + self.ds + "Util",
 			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "Core" + self.ds + "Vendor",
 			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "Font",
 			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "Geometry",
 			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "GJ",
 			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "GJ" + self.ds + "Next",
-			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "Graphics",
-			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "Graphics" + self.ds + "HLSL",
-			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "Graphics" + self.ds + "ImageIO",
-			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "Graphics" + self.ds + "Shaders",
 			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "Math",
 			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "Net",
 			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "Particles",
@@ -188,6 +193,7 @@ class Builder:
 			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "Tools",
 			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "Tween",
 			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "UI",
+			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "UI" + self.ds + "Util",
 			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "Util",
 			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "Util" + self.ds + "Containers",
 			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "vendor",
@@ -203,6 +209,8 @@ class Builder:
 			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "vendor" + self.ds + "tinyxml",
 			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "vendor" + self.ds + "spine",
 			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "vendor" + self.ds + "spine" + self.ds + "src",
+			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "vendor" + self.ds + "submodules",
+			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "vendor" + self.ds + "submodules" + self.ds + "libpng15",
 			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "vendor" + self.ds + "vorbis132",
 			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "vendor" + self.ds + "vorbis132" + self.ds + "modes",
 			self.build_folder + self.ds + self.output + self.ds + "src" + self.ds + "ARK2D" + self.ds + "vendor" + self.ds + "utf8",
@@ -426,8 +434,6 @@ class Builder:
 	        else:
 	            os.remove(full_name);
 	    os.rmdir(dir);
-
-
 
 	def startWindowsPhone(self):
 		# open config
@@ -2142,23 +2148,13 @@ class Builder:
 		return;
 	"""
 
-	def startWindows(self):
+	def startGeneric(self):
 		print("Building for Current Platform (" + self.platform + ")");
 
 		#prepare dirs
 		print("---");
 		print("Making Directories");
-		for h in self.mkdirs:
-			#h = "'" + h + "'";
-
-			#subprocess.call(['mkdir C:\\' + h], shell=True);
-			try:
-				print("mkdir " + self.game_dir + self.ds + h);
-				os.makedirs(self.game_dir + self.ds + h);
-			except OSError as exc:
-				if exc.errno == errno.EEXIST:
-					pass
-				else: raise
+		util.makeDirectories(self.mkdirs);
 
 		# make sure cache file exists
 
@@ -2167,7 +2163,7 @@ class Builder:
 		#if (self.building_game):
 			#cachefilename += self.game_dir + self.ds;
 
-		cachefilename += self.game_dir + self.ds + self.build_folder + self.ds + self.platform + self.ds + "build-cache" + self.ds  + "compiled.json";
+		cachefilename += self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds + "build-cache" + self.ds  + "compiled.json";
 
 		print("---");
 		print("Loading build cache file: " + cachefilename);
@@ -2214,7 +2210,10 @@ class Builder:
 			elif h_ext == 'mm':
 				compileStr += self.objcCompiler;
 			elif h_ext == 'rc':
-				compileStr += "windres ";
+				compileStr += self.resourceCompiler;
+
+			if (compileStr == "skip"):
+				continue;
 
 			if (not h in fjson or fjson[h]['date_modified'] < os.stat(self.game_dir + self.ds + h).st_mtime):
 
@@ -2222,8 +2221,10 @@ class Builder:
 
 				print(h);
 
+				compileStr += " " + self.compilerOptions;
+
 				if (h_ext == 'c' or h_ext == 'cpp' or h_ext == 'mm'):
-					compileStr += " -O3 -Wall -c -fmessage-length=0 ";
+					"""compileStr += " -O3 -Wall -c -fmessage-length=0 ";
 					if (sys.platform == "darwin"): #compiling on mac
 						if not "vendor" in newf:
 							compileStr += " -mmacosx-version-min=10.6 -DARK2D_MACINTOSH -DARK2D_DESKTOP -DMAC_OS_X_VERSION_MIN_REQUIRED=1060 -x objective-c++  ";
@@ -2264,14 +2265,15 @@ class Builder:
 						compileStr += " -o " + self.game_dir + self.ds + self.build_folder + self.ds + self.platform + self.ds + newf + " " + self.game_dir + self.ds + h + " ";
 					else:
 						compileStr += " -o " + self.game_dir + self.ds + self.build_folder + self.ds + self.platform + self.ds + newf + " " + self.game_dir + self.ds + h + " ";
-
-				elif h_ext == 'rc':
+					"""
+					compileStr += " -o " + self.game_dir + self.ds + self.build_folder + self.ds + self.platform + self.ds + newf + " " + self.game_dir + self.ds + h + " ";
+				"""elif h_ext == 'rc':
 					if (sys.platform == "win32"):
 						#compileStr += self.game_dir + self.ds + h + " " + self.game_dir + self.ds + self.build_folder + self.ds + self.platform + self.ds + newf + " ";
 						compileStr += self.game_dir + self.ds + h + " " +  self.game_dir + self.ds + self.build_folder + self.ds + self.platform + self.ds + newf + " ";
 					else:
 						processThisFile = False;
-
+				"""
 				if (processThisFile):
 					fjson[h] = {"date_modified": os.stat(self.game_dir + self.ds + h).st_mtime };
 
@@ -2280,9 +2282,17 @@ class Builder:
 					#subprocess.call([compileStr], shell=True);
 
 					# the above did not work on win7 64bit.
-					os.system(compileStr);
+					r = os.system(compileStr);
+					if (r != 0):
+						exit(0);
 					fchanged = True;
 
+					f = open(self.game_dir + self.ds + self.build_folder + self.ds + self.platform + self.ds + "build-cache" + self.ds + "compiled.json", "w")
+					f.write(json.dumps(fjson, sort_keys=True, indent=4));
+					f.close();
+			else :
+				#print (h + " - not changed");
+				pass;
 
 
 		# update compile cache thing
@@ -2294,7 +2304,7 @@ class Builder:
 			print("...nothing to compile!");
 
 		#link
-		self.doLink();
+		#self.doLink();
 
 
 
