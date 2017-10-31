@@ -261,11 +261,18 @@ if __name__ == "__main__":
 					tcindex += 1;
 
 				t = raw_input("> ")
-				target = targetConfigsPost[int(t)-1];
+				targetIndex = int(t)-1;
+				target = targetConfigsPost[targetIndex];
 
 				print("Clean? [Y/N]");
 				t = raw_input("> ");
-				clean = True if t == "Y" else False;
+				clean = True if t.lower() == "y" else False;
+
+				print("Only spritesheets? [Y/N]");
+				t = raw_input("> ");
+				onlyspritesheets = True if t.lower() == "y" else False;
+
+
 
 
 
@@ -288,8 +295,8 @@ if __name__ == "__main__":
 			a.newconfig = True;
 			a.compileproj = compileproj;
 			a.debug = debug;
-			a.platform = target_config['platform'];
-			a.output = target_config['folder'];
+			a.platform = target_config['platform'] if 'platform' in target_config else 'game';
+			a.output = target_config['folder'] if 'folder' in target_config else 'game';
 
 			a.ark2d_dir = ark2d_dir;
 			a.game_dir = dir;
