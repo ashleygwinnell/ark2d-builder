@@ -202,7 +202,9 @@ class MacBuild:
 
 		else:
 
-
+			self.osx_config = {};
+			if 'osx' in self.builder.target_config:
+				self.osx_config = self.builder.target_config['osx'];
 
 
 			mkdirs = [];
@@ -355,13 +357,14 @@ class MacBuild:
 				"files": []
 			}];
 			gypfiletargetcondition['link_settings']['libraries'] = [
+				'$(SDKROOT)/System/Library/Frameworks/GameKit.framework',
 				'$(SDKROOT)/System/Library/Frameworks/IOKit.framework',
 				'$(SDKROOT)/System/Library/Frameworks/Cocoa.framework',
 				'$(SDKROOT)/System/Library/Frameworks/CoreFoundation.framework',
 				'$(SDKROOT)/System/Library/Frameworks/QuartzCore.framework',
 				'$(SDKROOT)/System/Library/Frameworks/OpenGL.framework',
 				'$(SDKROOT)/System/Library/Frameworks/OpenAL.framework',
-				'$(SDKROOT)/System/Library/Frameworks/QTKit.framework',
+				#'$(SDKROOT)/System/Library/Frameworks/QTKit.framework',
 
 	          	#'../../lib/iphone/libfreetype.a'
 	          	#config['osx']['ark2d_dir'] + '/lib/osx/freetype/libfreetype.a',
@@ -425,6 +428,9 @@ class MacBuild:
 
 			if (self.builder.debug):
 				gypfiletargetcondition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] += " ARK2D_DEBUG ";
+
+			for define in self.builder.preprocessor_definitions:
+				gypfiletargetcondition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] += " " + define + " ";
 
 			xcconfigfilesimple = projectname + ".xcconfig";
 			xcconfigfile = self.builder.game_dir + ds + self.builder.build_folder + ds + self.builder.output + ds + xcconfigfilesimple;
@@ -652,10 +658,10 @@ class MacBuild:
 			# info_plist_contents += '		</dict>' + nl;
 			# info_plist_contents += '	</dict>' + nl;
 
-			info_plist_contents += '	<key>CFBundleIconFile</key>' + nl;
-			info_plist_contents += '	<string>data/icon.icns</string>' + nl;
+			#info_plist_contents += '	<key>CFBundleIconFile</key>' + nl;
+			#info_plist_contents += '	<string>data/icon.icns</string>' + nl;
 			info_plist_contents += '	<key>CFBundleIdentifier</key>' + nl;
-			info_plist_contents += '	<string>org.' + self.builder.developer_name_safe + '.' + projectname + '</string>' + nl;
+			info_plist_contents += '	<string>org.' + self.builder.developer_name_safe + '.' + projectname + '.macos</string>' + nl;
 			info_plist_contents += '	<key>CFBundleInfoDictionaryVersion</key>' + nl;
 			info_plist_contents += '	<string>6.0</string>' + nl;
 			info_plist_contents += '	<key>CFBundleName</key>' + nl;
@@ -668,6 +674,9 @@ class MacBuild:
 			info_plist_contents += '	<string>????</string>' + nl;
 			info_plist_contents += '	<key>CFBundleVersion</key>' + nl;
 			info_plist_contents += '	<string>1.0</string>' + nl;
+
+			info_plist_contents += '	<key>LSApplicationCategoryType</key>' + nl;
+			info_plist_contents += '	<string>public.app-category.games</string>' + nl;
 
 
 			info_plist_contents += '</dict>' + nl;
@@ -709,6 +718,44 @@ class MacBuild:
 
 			print("generating/updating strings");
 			self.builder.generateStrings();
+
+			# copy icon asset set in.
+			print("copying ark2d appicon.xcassets in");
+			xcassets_ark_icon_dir  = self.builder.ark2d_dir + "/lib/osx/project-template/";
+			xcassets_game_build_dir = self.builder.game_dir + ds + self.builder.build_folder + ds + self.builder.output + ds + self.builder.game_name;
+			xcassets_game_icon_dir = xcassets_game_build_dir + "/Images.xcassets/";
+			game_appicon_assets = "cp -r " + xcassets_ark_icon_dir + " " + xcassets_game_build_dir;
+			util.makeDirectories([xcassets_game_icon_dir]);
+			subprocess.call([game_appicon_assets], shell=True); #libark2d
+			
+			# replace assets if defined in target json
+			if "icon" in self.osx_config:
+				print("copying ark2d appicon.xcassets in");
+
+				icon_16 = self.osx_config['icon']['icon_16'];
+				icon_32 = self.osx_config['icon']['icon_32'];
+				icon_64 = self.osx_config['icon']['icon_64'];
+				icon_128 = self.osx_config['icon']['icon_128'];
+				icon_256 = self.osx_config['icon']['icon_256'];
+				icon_512 = self.osx_config['icon']['icon_512'];
+				icon_1024 = self.osx_config['icon']['icon_1024'];
+
+				icon_16 = util.str_replace(icon_16, [("%PREPRODUCTION_DIR%", self.builder.game_preproduction_dir), ("%ARK2D_DIR%", self.builder.ark2d_dir)]);
+				icon_32 = util.str_replace(icon_32, [("%PREPRODUCTION_DIR%", self.builder.game_preproduction_dir), ("%ARK2D_DIR%", self.builder.ark2d_dir)]);
+				icon_64 = util.str_replace(icon_64, [("%PREPRODUCTION_DIR%", self.builder.game_preproduction_dir), ("%ARK2D_DIR%", self.builder.ark2d_dir)]);
+				icon_128 = util.str_replace(icon_128, [("%PREPRODUCTION_DIR%", self.builder.game_preproduction_dir), ("%ARK2D_DIR%", self.builder.ark2d_dir)]);
+				icon_256 = util.str_replace(icon_256, [("%PREPRODUCTION_DIR%", self.builder.game_preproduction_dir), ("%ARK2D_DIR%", self.builder.ark2d_dir)]);
+				icon_512 = util.str_replace(icon_512, [("%PREPRODUCTION_DIR%", self.builder.game_preproduction_dir), ("%ARK2D_DIR%", self.builder.ark2d_dir)]);
+				icon_1024 = util.str_replace(icon_1024, [("%PREPRODUCTION_DIR%", self.builder.game_preproduction_dir), ("%ARK2D_DIR%", self.builder.ark2d_dir)]);
+
+				subprocess.call(["cp -r " + icon_16 + " " + xcassets_game_icon_dir + "16.png"], shell=True);
+				subprocess.call(["cp -r " + icon_32 + " " + xcassets_game_icon_dir + "32.png"], shell=True);
+				subprocess.call(["cp -r " + icon_64 + " " + xcassets_game_icon_dir + "64.png"], shell=True);
+				subprocess.call(["cp -r " + icon_128 + " " + xcassets_game_icon_dir + "128.png"], shell=True);
+				subprocess.call(["cp -r " + icon_256 + " " + xcassets_game_icon_dir + "256.png"], shell=True);
+				subprocess.call(["cp -r " + icon_512 + " " + xcassets_game_icon_dir + "512.png"], shell=True);
+				subprocess.call(["cp -r " + icon_1024 + " " + xcassets_game_icon_dir + "1024.png"], shell=True);
+
 
 			#copy ark2d resources in to project data folder.
 			#print("Copy game resources in to xcode dir");
