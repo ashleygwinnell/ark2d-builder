@@ -3239,6 +3239,8 @@ build:
 		cacheJSON = self.openCache("compiled");
 		cacheChanged = False;
 
+		optimisationlevel = "1";
+
 		print("-------------------------");
 		print("Compiling Sources");
 		for srcFile in self.src_files:
@@ -3260,6 +3262,7 @@ build:
 			compileStr += " -DARK2D_EMSCRIPTEN_JS ";
 			compileStr += " -DARK2D_DESKTOP ";
 			compileStr += " -DGL_GLEXT_PROTOTYPES ";
+			compileStr += " --js-library " + root_dir + "/lib/html5/mylibrary.js";
 			#compileStr += " EMCC_DEBUG=1 ";
 
 			if (self.building_game):
@@ -3297,9 +3300,11 @@ build:
 			#compileStr += " -s TOTAL_MEMORY=16777216 "
 			compileStr += " -s TOTAL_MEMORY=134217728 ";
 			compileStr += " -s USE_PTHREADS=0 ";
-			compileStr += " -s EXPORTED_FUNCTIONS=\"['_main','_emscripten_run_thread', '_emscripten_gamepadConnected', '_emscripten_containerSetSize', '_AngelScriptUtil_MessageCallback']\" ";
+			#compileStr += " -s MODULARIZE=1 ";
+			#compileStr += " -s EXPORT_FUNCTION_TABLES=1 ";
+			compileStr += " -s EXPORTED_FUNCTIONS=\"['_main','_emscripten_run_thread', '_emscripten_gamepadConnected', '_emscripten_containerSetSize', '_AngelScriptUtil_MessageCallback', '_AngelScriptUtil_Print']\" ";
 			compileStr += " -s ASSERTIONS=2 ";
-			compileStr += " -O1 ";
+			compileStr += " -O" +optimisationlevel + " ";
 
 			if self.building_game:
 				compileStr += " -ffunction-sections ";
@@ -3344,11 +3349,15 @@ build:
 			linkStr += em_gcc + " -s FULL_ES2=1 ";
 			#if (not self.debug):
 
+			#linkStr += " -s MODULARIZE=1 ";
+			#linkStr += " -s EXPORT_FUNCTION_TABLES=1 ";
 			linkStr += " -s DEMANGLE_SUPPORT=1 ";
-			linkStr += " -s EXPORTED_FUNCTIONS=\"['_main','_emscripten_run_thread', '_emscripten_gamepadConnected', '_emscripten_containerSetSize', '_AngelScriptUtil_MessageCallback']\" ";
+			linkStr += " -s EXPORTED_FUNCTIONS=\"['_main','_emscripten_run_thread', '_emscripten_gamepadConnected', '_emscripten_containerSetSize', '_AngelScriptUtil_MessageCallback', '_AngelScriptUtil_Print']\" ";
 			linkStr += " -s ASSERTIONS=2 ";
-			linkStr += " -O1 ";
+			linkStr += " -g ";
+			linkStr += " -O" +optimisationlevel + " ";
 			linkStr += " -o " + self.ark2d_dir + self.ds + "build/html5/libark2d.bc ";
+			linkStr += " --js-library " + self.ark2d_dir + self.ds + "lib/html5/mylibrary.js ";
 			for srcFile in self.src_files:
 				srcFileIndex = srcFile.rfind('.');
 				srcFileExtension = srcFile[srcFileIndex+1:len(srcFile)];
@@ -3373,9 +3382,11 @@ build:
 				linkStr += em_gcc + " -s FULL_ES2=1 ";
 				#if (not self.debug):
 				linkStr += " -s DEMANGLE_SUPPORT=1 ";
-				linkStr += " -s EXPORTED_FUNCTIONS=\"['_main','_emscripten_run_thread', '_emscripten_gamepadConnected', '_emscripten_containerSetSize', '_AngelScriptUtil_MessageCallback']\" ";
+				linkStr += " -s EXPORTED_FUNCTIONS=\"['_main','_emscripten_run_thread', '_emscripten_gamepadConnected', '_emscripten_containerSetSize', '_AngelScriptUtil_MessageCallback', '_AngelScriptUtil_Print']\" ";
 				linkStr += " -s ASSERTIONS=2 ";
-				linkStr += " -O1 ";
+				linkStr += " -g ";
+				linkStr += " -O" +optimisationlevel + " ";
+				linkStr += " --js-library " + self.ark2d_dir + self.ds + "lib/html5/mylibrary.js ";
 				linkStr += " -o " + self.ark2d_dir + self.ds + "build/html5/libark2d_"+moduleName+".bc ";
 
 				for srcFile in module['sources']:
@@ -3420,12 +3431,16 @@ build:
 
 			executableStr = "";
 			executableStr += em_gcc;
+			#executableStr += " -s MODULARIZE=1 ";
+			#executableStr += " -s EXPORT_FUNCTION_TABLES=1 ";
 			executableStr += " -s FULL_ES2=1 ";
 			executableStr += " -s DEMANGLE_SUPPORT=1 ";
 			executableStr += " -s TOTAL_MEMORY=134217728 ";
-			executableStr += " -s EXPORTED_FUNCTIONS=\"['_main','_emscripten_run_thread', '_emscripten_gamepadConnected', '_emscripten_containerSetSize', '_AngelScriptUtil_MessageCallback']\" ";
+			executableStr += " -s EXPORTED_FUNCTIONS=\"['_main','_emscripten_run_thread', '_emscripten_gamepadConnected', '_emscripten_containerSetSize', '_AngelScriptUtil_MessageCallback', '_AngelScriptUtil_Print']\" ";
 			executableStr += " -s ASSERTIONS=2 ";
-			executableStr += " -O1 ";
+			executableStr += " -g ";
+			executableStr += " -O" +optimisationlevel + " ";
+			executableStr += " --js-library " + self.ark2d_dir + self.ds + "lib/html5/mylibrary.js ";
 			executableStr += "-o " + root_dir + self.ds + "build/html5/game.html ";
 			for srcFile in self.src_files:
 				srcFileIndex = srcFile.rfind('.');
@@ -3477,8 +3492,12 @@ build:
 			game_width = self.target_config['html5']['game_width'];
 			game_height = self.target_config['html5']['game_height'];
 			indexpagestr = "";
-			editsStrReplace = [("%GAME_NAME%", self.game_config['game']['name']), ("%GAME_DESCRIPTION%", self.game_config['game']['description']), ("%GAME_WIDTH%", str(game_width)), ("%GAME_HEIGHT%", str(game_height)), ("%GAME_HEIGHT_CENTER%", str((game_height/2)-10)), ("%COMPANY_NAME%", self.developer_name) ];
-			f = open(ark2d_dir+"/lib/html5/index.html", "r");
+			editsStrReplace = [("%ARK2D_DIR%", self.ark2d_dir), ("%GAME_NAME%", self.game_config['game']['name']), ("%GAME_DESCRIPTION%", self.game_config['game']['description']), ("%GAME_WIDTH%", str(game_width)), ("%GAME_HEIGHT%", str(game_height)), ("%GAME_HEIGHT_CENTER%", str((game_height/2)-10)), ("%COMPANY_NAME%", self.developer_name) ];
+			
+			templateFile = ark2d_dir+"/lib/html5/index.html";
+			if "template" in self.target_config['html5']:
+				templateFile = util.str_replace(self.target_config['html5']['template'], editsStrReplace);
+			f = open(templateFile, "r");
 			indexpagestr = f.read();
 			f.close();
 			indexpagestr = util.str_replace(indexpagestr, editsStrReplace);
