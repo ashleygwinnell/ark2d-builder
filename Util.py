@@ -51,6 +51,20 @@ class Util:
 		filename = str[findex+1:len(str)];
 		return filename;
 
+	def get_str_filename_no_ext(self, str):
+		filename = self.get_str_filename(str);
+		dotindex = filename.rfind(".");
+		filename2 = filename[0:dotindex];
+		return filename2;
+
+	def strip_folder(self, str, folder):
+		index = str.find(folder);
+		return str[index:len(str)];
+
+	def strip_extension(self, str):
+		findex = str.rfind('.');
+		return str[0:findex];
+
 	def get_str_filename2(self, str):
 		findex = str.rfind("/");
 		filename = str[findex+1:len(str)];
@@ -104,11 +118,16 @@ class Util:
 				continue;
 
 			full_name = os.path.join(dir, name);
-			#print(full_name);
-
+			
 			if os.path.isdir(full_name):
-				thelist.extend(self.listFiles(full_name, usefullname, appendStr + name + ds));
+				thisAppendStr = appendStr + name + ds;
+				if ("../" in dir):
+					thisAppendStr = appendStr;
+
+				#print('dir ' + thisAppendStr);
+				thelist.extend(self.listFiles(full_name, usefullname, thisAppendStr));
 			else:
+				#print(full_name);
 				if usefullname==True:
 					thelist.extend([appendStr + full_name]);
 				else:
