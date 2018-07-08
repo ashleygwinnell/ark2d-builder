@@ -3503,7 +3503,7 @@ build:
 			game_height = self.target_config['html5']['game_height'];
 			indexpagestr = "";
 			editsStrReplace = [("%ARK2D_DIR%", self.ark2d_dir), ("%GAME_NAME%", self.game_config['game']['name']), ("%GAME_DESCRIPTION%", self.game_config['game']['description']), ("%GAME_WIDTH%", str(game_width)), ("%GAME_HEIGHT%", str(game_height)), ("%GAME_HEIGHT_CENTER%", str((game_height/2)-10)), ("%COMPANY_NAME%", self.developer_name) ];
-			
+
 			templateFile = ark2d_dir+"/lib/html5/index.html";
 			if "template" in self.target_config['html5']:
 				templateFile = util.str_replace(self.target_config['html5']['template'], editsStrReplace);
@@ -3563,7 +3563,7 @@ build:
 			game_dir = self.game_dir;
 			game_resources_dir = self.game_resources_dir;
 			audio_quality = 5 if not 'audio_quality' in self.ios_config else self.ios_config['audio_quality'];
-			
+
 			print("Creating/opening assets cache file...");
 			assetsCache = game_dir + self.ds + "build" + self.ds + self.platform + self.ds + "build-cache" + self.ds + "assets.json";
 			assetsJson = self.openCacheFile(assetsCache);
@@ -4440,7 +4440,7 @@ build:
 			f.write(xcconfigfilecontents);
 			f.close();
 
-			# build settings bundle file. 
+			# build settings bundle file.
 			print("generating Settings.bundle file...");
 			xc_settings_folder = self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds + "Settings.bundle";
 			util.makeDirectories([xc_settings_folder]);
@@ -4793,6 +4793,30 @@ build:
 								"filename": startdir + "Default-Portrait-IPhone4@2x.png",
 								"width" : 640,
 								"height": 1136,
+								"interpolation": "nearest_neighbour"
+							},
+							{
+								"filename": startdir + "Default-Portrait-IPhoneX.png",
+								"width" : 1125,
+								"height": 2436,
+								"interpolation": "nearest_neighbour"
+							},
+							{
+								"filename": startdir + "Default-Landscape-IPhoneX.png",
+								"width" : 2436,
+								"height": 1125,
+								"interpolation": "nearest_neighbour"
+							},
+							{
+								"filename": startdir + "Default-Portrait-IPhone8Plus.png",
+								"width" : 1242,
+								"height": 2208,
+								"interpolation": "nearest_neighbour"
+							},
+							{
+								"filename": startdir + "Default-Landscape-IPhone8Plus.png",
+								"width" : 2208,
+								"height": 1242,
 								"interpolation": "nearest_neighbour"
 							}
 						];
