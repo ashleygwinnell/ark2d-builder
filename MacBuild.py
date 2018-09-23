@@ -123,13 +123,13 @@ class MacBuild:
 
 			#exit(0);
 			#pchfilename = self.builder.game_dir + ds + "lib/iphone/" + projectname + "-Prefix.pch";
-			pchfilename = self.builder.game_dir + ds + self.builder.build_folder + ds + self.builder.output + ds + projectname + "-Prefix.pch";
+			#pchfilename = ""; #self.builder.game_dir + ds + self.builder.build_folder + ds + self.builder.output + ds + projectname + "-Prefix.pch";
 			xcconfigfile = self.builder.game_dir + ds + self.builder.build_folder + ds + self.builder.output + ds + projectname + ".xcconfig";
 
 			#delete xcode project?
 			try:
 				print("deleting xcode project");
-				os.system("rm -r -d " + pchfilename);
+				#os.system("rm -r -d " + pchfilename);
 				os.system("rm -r -d " + xcconfigfile);
 				os.system("rm -r -d " + self.builder.build_folder + ds + self.builder.output + ds + "DerivedData");
 			except:
@@ -165,10 +165,10 @@ class MacBuild:
 
 			#pcheaderfile += "#endif";
 
-			print("saving pch file: " + pchfilename);
-			f = open(pchfilename, "w")
-			f.write(pcheaderfile);
-			f.close();
+			# print("saving pch file: " + pchfilename);
+			# f = open(pchfilename, "w")
+			# f.write(pcheaderfile);
+			# f.close();
 
 			#print("set the pch manually in xcode, under Apple LLVM compiler 4.1 - Language...");
 			#print("set YES and ../../lib/iphone/" + projectname + "-Prefx.pch");
@@ -177,7 +177,7 @@ class MacBuild:
 			print("generating xcconfig file:");
 			xcconfigfilecontents = "";
 			xcconfigfilecontents += "GCC_PRECOMPILE_PREFIX_HEADER = YES;" + nl;
-			xcconfigfilecontents += "GCC_PREFIX_HEADER = " + pchfilename + ";" + nl;
+			#xcconfigfilecontents += "GCC_PREFIX_HEADER = " + pchfilename + ";" + nl;
 			xcconfigfilecontents += "SRCROOT = " + self.builder.game_dir + ds + "src" + ds + "ARK2D" + nl;
 			xcconfigfilecontents += "HEADERMAP_INCLUDES_FLAT_ENTRIES_FOR_TARGET_BEING_BUILT = NO;" + nl;
 			xcconfigfilecontents += "HEADERMAP_INCLUDES_PROJECT_HEADERS = NO;" + nl;
@@ -477,11 +477,11 @@ class MacBuild:
 
 
 			#delete xcode project?
-			pchfilename = self.builder.game_dir + ds + self.builder.build_folder + ds + self.builder.output + ds + projectname + "-Prefix.pch";
+			#pchfilename = ""; #self.builder.game_dir + ds + self.builder.build_folder + ds + self.builder.output + ds + projectname + "-Prefix.pch";
 			info_plist_filename = self.builder.game_dir + ds + self.builder.build_folder + ds + self.builder.output + ds + projectname + "-Info.plist";
 			try:
 				print("deleting xcode project");
-				os.system("rm -r -d " + pchfilename);
+				#os.system("rm -r -d " + pchfilename);
 				os.system("rm -r -d " + info_plist_filename);
 				os.system("rm -r -d " + xcconfigfile);
 				os.system("rm -r -d " + self.builder.game_dir + ds + self.builder.build_folder + ds + self.builder.output + ds + "DerivedData");
@@ -606,10 +606,10 @@ class MacBuild:
 
 			#pcheaderfile += "#endif";
 
-			print("saving pch file: " + pchfilename);
-			f = open(pchfilename, "w")
-			f.write(pcheaderfile);
-			f.close();
+			# print("saving pch file: " + pchfilename);
+			# f = open(pchfilename, "w")
+			# f.write(pcheaderfile);
+			# f.close();
 
 			print ("generating project-Info.plist file");
 			info_plist_contents = "";
@@ -695,7 +695,7 @@ class MacBuild:
 			print("generating xcconfig file:");
 			xcconfigfilecontents = "";
 			xcconfigfilecontents += "GCC_PRECOMPILE_PREFIX_HEADER = YES;" + nl;
-			xcconfigfilecontents += "GCC_PREFIX_HEADER = " + pchfilename + ";" + nl;
+			#xcconfigfilecontents += "GCC_PREFIX_HEADER = " + pchfilename + ";" + nl;
 			xcconfigfilecontents += "SRCROOT = " + self.builder.game_dir + ds + "src" + ds + "ARK2D" + nl;
 			xcconfigfilecontents += "HEADERMAP_INCLUDES_FLAT_ENTRIES_FOR_TARGET_BEING_BUILT = NO;" + nl;
 			xcconfigfilecontents += "HEADERMAP_INCLUDES_PROJECT_HEADERS = NO;" + nl;
@@ -727,7 +727,7 @@ class MacBuild:
 			game_appicon_assets = "cp -r " + xcassets_ark_icon_dir + " " + xcassets_game_build_dir;
 			util.makeDirectories([xcassets_game_icon_dir]);
 			subprocess.call([game_appicon_assets], shell=True); #libark2d
-			
+
 			# replace assets if defined in target json
 			if "icon" in self.osx_config:
 				print("copying ark2d appicon.xcassets in");
