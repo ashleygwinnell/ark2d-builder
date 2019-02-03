@@ -12,6 +12,7 @@ import time
 import hashlib
 
 from Util import *
+from Module import *
 from MacBuild import *
 
 util = Util();
@@ -327,6 +328,11 @@ class Builder:
 
 		]);
 		self.mkdirs.extend(self.game_mkdirs);
+
+		versionCodePieces = self.game_version.split('.');
+		self.game_version_major = str(versionCodePieces[0]);
+		self.game_version_minor = str(versionCodePieces[1]);
+		self.game_version_patch = str(versionCodePieces[2]);
 
 		if (self.platform == "windows-old"):
 			self.ark2d_tmpdir = "C:\\a2d\\gm";
@@ -3272,7 +3278,7 @@ build:
 			compileStr += " -DARK2D_EMSCRIPTEN_JS ";
 			compileStr += " -DARK2D_DESKTOP ";
 			compileStr += " -DGL_GLEXT_PROTOTYPES ";
-			compileStr += " --js-library " + root_dir + "/lib/html5/mylibrary.js";
+			#compileStr += " --js-library " + root_dir + "/lib/html5/mylibrary.js";
 			#compileStr += " EMCC_DEBUG=1 ";
 
 			if (self.building_game):
@@ -3312,7 +3318,7 @@ build:
 			compileStr += " -s USE_PTHREADS=0 ";
 			#compileStr += " -s MODULARIZE=1 ";
 			#compileStr += " -s EXPORT_FUNCTION_TABLES=1 ";
-			compileStr += " -s EXPORTED_FUNCTIONS=\"['_main','_emscripten_run_thread', '_emscripten_gamepadConnected', '_emscripten_containerSetSize', '_AngelScriptUtil_MessageCallback', '_AngelScriptUtil_Print']\" ";
+			compileStr += " -s EXPORTED_FUNCTIONS=\"['_main','_emscripten_run_thread', '_emscripten_gamepadConnected', '_emscripten_containerSetSize', '_AngelScriptUtil_MessageCallback', '_AngelScriptUtil_Print', '_emscripten_StateBasedGame_enterState']\" ";
 			compileStr += " -s ASSERTIONS=2 ";
 			compileStr += " -O" +optimisationlevel + " ";
 
@@ -3362,12 +3368,12 @@ build:
 			#linkStr += " -s MODULARIZE=1 ";
 			#linkStr += " -s EXPORT_FUNCTION_TABLES=1 ";
 			linkStr += " -s DEMANGLE_SUPPORT=1 ";
-			linkStr += " -s EXPORTED_FUNCTIONS=\"['_main','_emscripten_run_thread', '_emscripten_gamepadConnected', '_emscripten_containerSetSize', '_AngelScriptUtil_MessageCallback', '_AngelScriptUtil_Print']\" ";
+			linkStr += " -s EXPORTED_FUNCTIONS=\"['_main','_emscripten_run_thread', '_emscripten_gamepadConnected', '_emscripten_containerSetSize', '_AngelScriptUtil_MessageCallback', '_AngelScriptUtil_Print', '_emscripten_StateBasedGame_enterState']\" ";
 			linkStr += " -s ASSERTIONS=2 ";
 			linkStr += " -g ";
 			linkStr += " -O" +optimisationlevel + " ";
 			linkStr += " -o " + self.ark2d_dir + self.ds + "build/html5/libark2d.bc ";
-			linkStr += " --js-library " + self.ark2d_dir + self.ds + "lib/html5/mylibrary.js ";
+			#linkStr += " --js-library " + self.ark2d_dir + self.ds + "lib/html5/mylibrary.js ";
 			for srcFile in self.src_files:
 				srcFileIndex = srcFile.rfind('.');
 				srcFileExtension = srcFile[srcFileIndex+1:len(srcFile)];
@@ -3392,11 +3398,11 @@ build:
 				linkStr += em_gcc + " -s FULL_ES2=1 ";
 				#if (not self.debug):
 				linkStr += " -s DEMANGLE_SUPPORT=1 ";
-				linkStr += " -s EXPORTED_FUNCTIONS=\"['_main','_emscripten_run_thread', '_emscripten_gamepadConnected', '_emscripten_containerSetSize', '_AngelScriptUtil_MessageCallback', '_AngelScriptUtil_Print']\" ";
+				linkStr += " -s EXPORTED_FUNCTIONS=\"['_main','_emscripten_run_thread', '_emscripten_gamepadConnected', '_emscripten_containerSetSize', '_AngelScriptUtil_MessageCallback', '_AngelScriptUtil_Print', '_emscripten_StateBasedGame_enterState']\" ";
 				linkStr += " -s ASSERTIONS=2 ";
 				linkStr += " -g ";
 				linkStr += " -O" +optimisationlevel + " ";
-				linkStr += " --js-library " + self.ark2d_dir + self.ds + "lib/html5/mylibrary.js ";
+				#linkStr += " --js-library " + self.ark2d_dir + self.ds + "lib/html5/mylibrary.js ";
 				linkStr += " -o " + self.ark2d_dir + self.ds + "build/html5/libark2d_"+moduleName+".bc ";
 
 				for srcFile in module['sources']:
@@ -3446,11 +3452,11 @@ build:
 			executableStr += " -s FULL_ES2=1 ";
 			executableStr += " -s DEMANGLE_SUPPORT=1 ";
 			executableStr += " -s TOTAL_MEMORY=134217728 ";
-			executableStr += " -s EXPORTED_FUNCTIONS=\"['_main','_emscripten_run_thread', '_emscripten_gamepadConnected', '_emscripten_containerSetSize', '_AngelScriptUtil_MessageCallback', '_AngelScriptUtil_Print']\" ";
+			executableStr += " -s EXPORTED_FUNCTIONS=\"['_main','_emscripten_run_thread', '_emscripten_gamepadConnected', '_emscripten_containerSetSize', '_AngelScriptUtil_MessageCallback', '_AngelScriptUtil_Print', '_emscripten_StateBasedGame_enterState']\" ";
 			executableStr += " -s ASSERTIONS=2 ";
 			executableStr += " -g ";
 			executableStr += " -O" +optimisationlevel + " ";
-			executableStr += " --js-library " + self.ark2d_dir + self.ds + "lib/html5/mylibrary.js ";
+			#executableStr += " --js-library " + self.ark2d_dir + self.ds + "lib/html5/mylibrary.js ";
 			executableStr += "-o " + root_dir + self.ds + "build/html5/game.html ";
 			for srcFile in self.src_files:
 				srcFileIndex = srcFile.rfind('.');
@@ -3514,6 +3520,12 @@ build:
 			f = open(root_dir + self.ds + self.build_folder + self.ds + self.platform + self.ds + "index.html", "w");
 			f.write(indexpagestr);
 			f.close();
+
+			if "editor" in self.target_config['html5']:
+				if self.target_config['html5']['editor'] == True:
+					# copy editor folder.
+					self.mycopytree(ark2d_dir+"/lib/html5/editor", root_dir + self.ds + self.build_folder + self.ds + self.platform + self.ds + "editor" );
+
 
 
 		print("-------------------------");
@@ -3797,7 +3809,12 @@ build:
 			gypfiletarget['dependencies'] = [];
 			gypfiletarget['conditions'] = [];
 			gypfiletargetcondition = {};
-			gypfiletargetcondition['defines'] = ['ARK2D_IPHONE', "ARK2D_IOS", "PNG_ARM_NEON_OPT=0"]; #, 'CF_EXCLUDE_CSTD_HEADERS'];
+			gypfiletargetcondition['defines'] = [
+				'ARK2D_IPHONE',
+				"ARK2D_CURRENT_CONFIG=" + self.target_config_name,
+				"ARK2D_IOS",
+				"PNG_ARM_NEON_OPT=0"
+			]; #, 'CF_EXCLUDE_CSTD_HEADERS'];
 
 			if self.debug:
 				gypfiletargetcondition['defines'].extend(["ARK2D_DEBUG"]);
@@ -3854,7 +3871,7 @@ build:
 			gypfiletargetcondition['xcode_settings']['CLANG_CXX_LANGUAGE_STANDARD'] = "c++0x";
 			gypfiletargetcondition['xcode_settings']['CLANG_CXX_LIBRARY'] = "libc++";
 			gypfiletargetcondition['xcode_settings']['GCC_C_LANGUAGE_STANDARD'] = "c11";
-			gypfiletargetcondition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] = "ARK2D_IPHONE ARK2D_IOS PNG_ARM_NEON_OPT=0";
+			gypfiletargetcondition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] = "ARK2D_IPHONE ARK2D_IOS ARK2D_CURRENT_CONFIG=" + self.target_config_name + " PNG_ARM_NEON_OPT=0";
 			gypfiletargetcondition['xcode_settings']['GCC_OPTIMIZATION_LEVEL'] = "0";
 
 			if self.debug:
@@ -3950,7 +3967,7 @@ build:
 			print("generating xcconfig file:");
 			xcconfigfilecontents = "";
 			xcconfigfilecontents += "GCC_PRECOMPILE_PREFIX_HEADER = YES;" + nl;
-			xcconfigfilecontents += "GCC_PREFIX_HEADER = " + pchfilename + ";" + nl;
+			#xcconfigfilecontents += "GCC_PREFIX_HEADER = " + pchfilename + ";" + nl;
 			xcconfigfilecontents += "SRCROOT = " + self.game_dir + self.ds + "src" + self.ds + "ARK2D" + nl;
 			xcconfigfilecontents += "HEADERMAP_INCLUDES_FLAT_ENTRIES_FOR_TARGET_BEING_BUILT = NO;" + nl;
 			xcconfigfilecontents += "HEADERMAP_INCLUDES_PROJECT_HEADERS = NO;" + nl;
@@ -4014,12 +4031,50 @@ build:
 			gypfiletarget['dependencies'] = [];
 			gypfiletarget['conditions'] = [];
 			gypfiletargetcondition = {};
-			gypfiletargetcondition['defines'] = ['ARK2D_IPHONE', 'ARK2D_IOS', 'PNG_ARM_NEON_OPT=0']; #, 'CF_EXCLUDE_CSTD_HEADERS'];
+			gypfiletargetcondition['defines'] = [
+				'ARK2D_IPHONE',
+				'ARK2D_IOS',
+				"ARK2D_CURRENT_CONFIG=" + self.target_config_name,
+				"GAME_MAJOR_VERSION=" + self.game_version_major,
+				"GAME_MINOR_VERSION=" + self.game_version_minor,
+				"GAME_PATCH_VERSION=" + self.game_version_patch,
+				'PNG_ARM_NEON_OPT=0'
+			]; #, 'CF_EXCLUDE_CSTD_HEADERS'];
 
 			if self.debug:
 				gypfiletargetcondition['defines'].extend(["ARK2D_DEBUG"]);
 
 			gypfiletargetcondition['sources'] = [];
+
+			gypfiletargetcondition['actions'] = [
+				{
+					'action_name': 'Copy game assets into Xcode project',
+					'inputs': [],
+					'outputs': [],
+					'action': [
+						'cp',
+						'-r',
+						self.game_resources_dir + '/',
+						self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds + "data/"
+					],
+					'message': 'copy game assets'
+				},
+				{
+					'action_name': 'Copy ark2d assets into Xcode project',
+					'inputs': [],
+					'outputs': [],
+					'action': [
+						'cp',
+						'-r',
+						self.ark2d_dir + '/data/',
+						self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds + 'data/ark2d/'
+					],
+					'message': 'copy ark2d assets'
+				}
+			];
+			# TODO above is similar to MacBuild.
+
+
 			gypfiletargetcondition['sources!'] = [];
 			gypfiletargetcondition['link_settings'] = {};
 			gypfiletargetcondition['link_settings']['libraries'] = [
@@ -4041,28 +4096,8 @@ build:
 	          	self.ark2d_dir + '/lib/iphone/libangelscriptd.a',
 	          	'$(SDKROOT)/System/usr/lib/libsqlite3.tbd', #requried for GA
 	          	self.ark2d_dir + '/lib/iphone/libGoogleAnalyticsServices.a',
-	          	self.ark2d_dir + '/build/ios/DerivedData/ark2d/Build/Products/Default-iphoneos/libark2d-iPhone.a'
+	          	self.ark2d_dir + '/build/ios/DerivedData/ark2d-ios/Build/Products/Default-iphoneos/libark2d-iPhone.a'
 			];
-
-			if "onesignal" in self.ios_config:
-				gypfiletargetcondition['link_settings']['libraries'].extend( [ self.ios_config['onesignal']['sdk_dir'] ] );
-				#gypfiletargetcondition['link_settings']['libraries'].extend( [ "$(SDKROOT)/System/Library/Frameworks/SystemConfiguration.framework" ] );
-
-			print("Add libraries to project ")
-			"""
-			if "game_libraries" in config:
-				for gamelibrary in config['game_libraries']:
-					gamelibraryname = gamelibrary['name'];
-					if "iphone" in gamelibrary:
-						if "os" in gamelibrary['iphone']:
-							gypfiletargetcondition['link_settings']['libraries'].extend([self.game_dir + self.ds + gamelibrary['iphone']['os']]);
-			"""
-			if "native_libraries" in self.ios_config:
-				for nativelib in self.ios_config['native_libraries']:
-					if "os" in nativelib:
-						for lib in nativelib['os']:
-							gypfiletargetcondition['link_settings']['libraries'].extend([self.game_dir + self.ds + lib]);
-
 
 
 
@@ -4087,7 +4122,14 @@ build:
 			gypfiletargetcondition['xcode_settings']['CLANG_CXX_LANGUAGE_STANDARD'] = "c++0x";
 			gypfiletargetcondition['xcode_settings']['CLANG_CXX_LIBRARY'] = "libc++";
 			gypfiletargetcondition['xcode_settings']['GCC_C_LANGUAGE_STANDARD'] = "c11";
-			gypfiletargetcondition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] = "ARK2D_IPHONE ARK2D_IOS PNG_ARM_NEON_OPT=0";
+			gypfiletargetcondition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] = "";
+			gypfiletargetcondition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] += "ARK2D_IPHONE ";
+			gypfiletargetcondition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] += "ARK2D_IOS ";
+			gypfiletargetcondition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] += "ARK2D_CURRENT_CONFIG=" + self.target_config_name + " ";
+			gypfiletargetcondition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] += "GAME_MAJOR_VERSION=" + self.game_version_major + " ";
+			gypfiletargetcondition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] += "GAME_MINOR_VERSION=" + self.game_version_minor + " ";
+			gypfiletargetcondition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] += "GAME_PATCH_VERSION=" + self.game_version_patch + " ";
+			gypfiletargetcondition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] += "PNG_ARM_NEON_OPT=0";
 			gypfiletargetcondition['xcode_settings']['GCC_OPTIMIZATION_LEVEL'] = "0";
 
 			if self.debug:
@@ -4227,6 +4269,61 @@ build:
 
 			gypfile['targets'].extend([gypfiletarget_simulator]);
 			"""
+
+
+			# add custom modules to GYP
+			print("Add external modules to project")
+			if "external_modules" in self.target_config:
+				for module in self.target_config['external_modules']:
+					print module
+
+					try:
+						moduleJsonFilename = module + self.ds + "module.json"
+						f = open(moduleJsonFilename, "r")
+						fcontents = f.read();
+						f.close();
+						fjson = json.loads(fcontents);
+
+						print  (fjson);
+						moduleObj = Module(self, module);
+						moduleObj.initFromConfig(fjson);
+
+						print (moduleObj);
+
+						gypfiletargetcondition['include_dirs'].extend( moduleObj.platforms.ios.header_search_paths );
+						gypfiletargetcondition['ldflags'].extend( moduleObj.platforms.ios.library_search_paths );
+						gypfiletargetcondition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] += " ".join(moduleObj.platforms.ios.preprocessor_definitions);
+						gypfiletargetcondition['link_settings']['libraries'].extend( moduleObj.platforms.ios.libraries );
+					except OSError as exc:
+						print("Module config was not valid.");
+						print(exc);
+						exit(0);
+
+
+					#####
+
+			#if "onesignal" in self.ios_config:
+			#	gypfiletargetcondition['link_settings']['libraries'].extend( [ self.ios_config['onesignal']['sdk_dir'] ] );
+				#gypfiletargetcondition['link_settings']['libraries'].extend( [ "$(SDKROOT)/System/Library/Frameworks/SystemConfiguration.framework" ] );
+
+			#print("Add libraries to project ")
+			"""
+			if "game_libraries" in config:
+				for gamelibrary in config['game_libraries']:
+					gamelibraryname = gamelibrary['name'];
+					if "iphone" in gamelibrary:
+						if "os" in gamelibrary['iphone']:
+							gypfiletargetcondition['link_settings']['libraries'].extend([self.game_dir + self.ds + gamelibrary['iphone']['os']]);
+			"""
+			# if "native_libraries" in self.ios_config:
+			# 	for nativelib in self.ios_config['native_libraries']:
+			# 		if "os" in nativelib:
+			# 			for lib in nativelib['os']:
+			# 				gypfiletargetcondition['link_settings']['libraries'].extend([self.game_dir + self.ds + lib]);
+
+
+
+
 
 			print("saving gyp file: " + gypfilename);
 			f = open(gypfilename, "w")
@@ -4423,7 +4520,7 @@ build:
 			print("generating xcconfig file:");
 			xcconfigfilecontents = "";
 			xcconfigfilecontents += "GCC_PRECOMPILE_PREFIX_HEADER = YES;" + nl;
-			xcconfigfilecontents += "GCC_PREFIX_HEADER = " + pchfilename + ";" + nl;
+			#xcconfigfilecontents += "GCC_PREFIX_HEADER = " + pchfilename + ";" + nl;
 			xcconfigfilecontents += "SRCROOT = " + self.game_dir + self.ds + "src" + self.ds + "ARK2D" + nl;
 			xcconfigfilecontents += "HEADERMAP_INCLUDES_FLAT_ENTRIES_FOR_TARGET_BEING_BUILT = NO;" + nl;
 			xcconfigfilecontents += "HEADERMAP_INCLUDES_PROJECT_HEADERS = NO;" + nl;

@@ -309,7 +309,7 @@ if __name__ == "__main__":
 			a.game_preproduction_dir = a.game_dir + a.ds + game_config['game']['folders']['preproduction'];
 			a.game_clear_color = game_config['game']['clearcolor'];
 			a.game_orientation = game_config['game']['orientation'];
-			a.game_version = game_config['game']['version'] or "1.0.0";
+			a.game_version = game_config['game']['version'] or "0.1.0";
 			a.developer_name = game_config['developer']['name'];
 			a.developer_name_safe = game_config['developer']['name_safe'];
 
@@ -321,6 +321,7 @@ if __name__ == "__main__":
 			a.ark_config = ark_config
 			a.game_config = game_config;
 			a.target_config_file = target;
+			a.target_config_name = util.strip_extension(a.target_config_file);
 			a.target_config = target_config;
 
 			a.gamePreInit();
@@ -328,11 +329,13 @@ if __name__ == "__main__":
 			a.tag_replacements = [
 				("%PREPRODUCTION_DIR%", a.game_preproduction_dir),
 				("%ARK2D_DIR%", a.ark2d_dir),
+				("%ARK2D_CURRENT_CONFIG%", a.target_config_name),
 				("%COMPANY_NAME%", a.developer_name),
 				("%COMPANY_NAME_SAFE%", a.developer_name_safe),
 				("%GAME_DIR%", a.game_dir),
 				("%GAME_NAME%", a.game_name),
 				("%GAME_NAME_SAFE%", a.game_name_safe),
+				("%GAME_VERSION%", a.game_version),
 				("%GAME_SHORT_NAME%", a.game_class_name),
 				("%GAME_CLASS_NAME%", a.game_class_name),
 				("%GAME_CLEAR_COLOR%", a.game_clear_color),

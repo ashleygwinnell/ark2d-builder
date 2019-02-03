@@ -341,7 +341,7 @@ class MacBuild:
 					'outputs': [],
 					'action': [
 						'cp',
-						self.builder.ark2d_dir + '/build/osx/DerivedData/ark2d/Build/Products/Default/libark2d-OSX.dylib',
+						self.builder.ark2d_dir + '/build/osx/DerivedData/ark2d-osx/Build/Products/Default/libark2d-OSX.dylib',
 						self.builder.game_dir + ds + self.builder.build_folder + ds + self.builder.output + ds + 'data/ark2d/libark2d.dylib'
 					],
 					'message': 'copy ark2d library'
@@ -375,7 +375,7 @@ class MacBuild:
 	          	# in current project
 	          	self.builder.game_dir + '/build/' + self.builder.output + '/data/ark2d/libark2d.dylib'
 	          	# in ark2d dir -- we copy the latest in now!
-	          	# self.ark2d_dir + '/build/osx/DerivedData/ark2d/Build/Products/Default/libark2d-OSX.dylib'
+	          	# self.ark2d_dir + '/build/osx/DerivedData/ark2d-osx/Build/Products/Default/libark2d-OSX.dylib'
 			];
 			gypfiletargetcondition['link_settings']['libraries'] = self.builder.addLibrariesToArray(gypfiletargetcondition['link_settings']['libraries'], self.builder.libs);
 			#gypfiletargetcondition['link_settings']['libraries'].extend( self.builder.target_config['libs'] );
@@ -769,7 +769,7 @@ class MacBuild:
 			#subprocess.call([ark2d_resources_copy_line], shell=True); #libark2d
 
 			#print("Copy ark2d dylib in to xcode dir");
-			#subprocess.call(["cp " + self.builder.ark2d_dir + "/build/osx/DerivedData/ark2d/Build/Products/Default/libark2d-OSX.dylib " + self.builder.game_dir + ds + self.builder.build_folder + ds + self.builder.output + ds + "data/ark2d/libark2d.dylib"], shell=True); #libark2d
+			#subprocess.call(["cp " + self.builder.ark2d_dir + "/build/osx/DerivedData/ark2d-osx/Build/Products/Default/libark2d-OSX.dylib " + self.builder.game_dir + ds + self.builder.build_folder + ds + self.builder.output + ds + "data/ark2d/libark2d.dylib"], shell=True); #libark2d
 
 			#generate icons
 			"""
