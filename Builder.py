@@ -14,6 +14,7 @@ import hashlib
 from Util import *
 from Module import *
 from MacBuild import *
+from IOSBuild import *
 
 util = Util();
 
@@ -34,6 +35,8 @@ class Builder:
 		self.libs = [];
 		self.include_dirs = [];
 		self.preprocessor_definitions = [];
+		self.aars = [];
+		self.aar_paths = [];
 		#self.mac_game_icns = "";
 
 		self.build_folder = "build";
@@ -327,12 +330,16 @@ class Builder:
 			self.build_folder + self.ds + self.output + self.ds + "build-cache" # cache folder
 
 		]);
-		self.mkdirs.extend(self.game_mkdirs);
+		print  self.mkdirs;
+		print  self.game_mkdirs;
+		print  self.game_version;
+		if (self.game_mkdirs and len(self.game_mkdirs) > 0):
+			self.mkdirs.extend(self.game_mkdirs);
 
 		versionCodePieces = self.game_version.split('.');
 		self.game_version_major = str(versionCodePieces[0]);
-		self.game_version_minor = str(versionCodePieces[1]);
-		self.game_version_patch = str(versionCodePieces[2]);
+		self.game_version_minor = str(versionCodePieces[1]) if len(versionCodePieces) > 1 else "0";
+		self.game_version_patch = str(versionCodePieces[2]) if len(versionCodePieces) > 2 else "0";
 
 		if (self.platform == "windows-old"):
 			self.ark2d_tmpdir = "C:\\a2d\\gm";
@@ -4023,6 +4030,7 @@ build:
 			#'mac_bundle': 1,
 			gypfiletarget['include_dirs'] = [];
 			gypfiletarget['sources'] = [];
+			gypfiletarget['xcode_framework_dirs'] = [];
 
 			for srcfile in self.game_config['src_files']:
 				gypfiletarget['sources'].extend(["../../"+srcfile]);
@@ -4113,6 +4121,7 @@ build:
 				ark2ddir + '/vendor/spine/includes',
 				ark2ddir + '/vendor/angelscript'
 			];
+			gypfiletargetcondition['xcode_framework_dirs'] = [];
 
 			gypfiletargetcondition['xcode_settings'] = {};
 			gypfiletargetcondition['xcode_settings']['ARCHS'] = "armv6 armv7 arm64";
@@ -4131,6 +4140,7 @@ build:
 			gypfiletargetcondition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] += "GAME_PATCH_VERSION=" + self.game_version_patch + " ";
 			gypfiletargetcondition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] += "PNG_ARM_NEON_OPT=0";
 			gypfiletargetcondition['xcode_settings']['GCC_OPTIMIZATION_LEVEL'] = "0";
+			gypfiletargetcondition['xcode_settings']['FRAMEWORK_SEARCH_PATHS'] = []
 
 			if self.debug:
 				gypfiletargetcondition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] += " ARK2D_DEBUG";
@@ -4140,28 +4150,32 @@ build:
 
 			gypfiletargetcondition['xcode_config_file'] = xcconfigfilesimple;
 			gypfiletargetcondition['mac_bundle_resources'] = [
+				#self.game_name_safe + "-iPhone/Images.xcassets",
+
 				"data/",				#ark2d and game data
+				"Images.xcassets/",		#icons/launchimages
 
-				"Icon.png",				#iphone
-				"Icon@2x.png",			#iphone-retina
-				"Icon-Small.png",		#iphone-spotlight
-				"Icon-Small@2x.png",	#iphone-spotlight-retina
+				# "Icon.png",				#iphone
+				# "Icon@2x.png",			#iphone-retina
+				# "Icon-Small.png",		#iphone-spotlight
+				# "Icon-Small@2x.png",	#iphone-spotlight-retina
 
-				"Icon-72.png",			#ipad
-				"Icon-72@2x.png",		#ipad-retina
-				"Icon-Small-50.png",	#ipad-spotlight
-				"Icon-Small-50@2x.png",	#ipad-spotlight-retina
+				# "Icon-72.png",			#ipad
+				# "Icon-72@2x.png",		#ipad-retina
+				# "Icon-Small-50.png",	#ipad-spotlight
+				# "Icon-Small-50@2x.png",	#ipad-spotlight-retina
 
-				"Icon-40.png", 			#ios7
-				"Icon-80.png", 			#ios7
-				"Icon-120.png", 		#ios7
+				# "Icon-40.png", 			#ios7
+				# "Icon-80.png", 			#ios7
+				# "Icon-120.png", 		#ios7
 
-				"Icon-76.png", 			#ios7
-				"Icon-152.png", 		#ios7
-				"Icon-167.png", 		#ios...9?
+				# "Icon-76.png", 			#ios7
+				# "Icon-152.png", 		#ios7
+				# "Icon-167.png", 		#ios...9?
 
-				"iTunesArtwork", 		#app-store-icon
-				"iTunesArtwork@2x", 	#app-store-icon-retina
+				# "iTunesArtwork", 		#app-store-icon
+				# "iTunesArtwork@2x", 	#app-store-icon-retina
+				# "iTunesArtwork@2x", 	#app-store-icon-retina
 			];
 			if "icloud" in self.ios_config and self.ios_config["icloud"] == True:
 				gypfiletargetcondition['mac_bundle_resources'].extend(["Settings.bundle"]);
@@ -4270,6 +4284,23 @@ build:
 			gypfile['targets'].extend([gypfiletarget_simulator]);
 			"""
 
+			#gypfiletarget['sources'].extend(  );
+			#gypfiletarget['sources'].extend( [self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds + "Images.xcassets"] );
+			#gypfiletarget['sources'].extend( [self.build_folder + self.ds + self.output + self.ds + "Images.xcassets"] );
+			gypfiletarget['sources'].extend( [self.ds + "Images.xcassets"] );
+			# = gypfiletarget['source'];
+
+			#gypfiletarget['files'] = [];
+			#gypfiletarget['files'].extend( [self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds + "Images.xcassets"] );
+			#gypfiletarget['files'].extend( [self.build_folder + self.ds + self.output + self.ds + "Images.xcassets"] );
+			#gypfiletarget['files'].extend( [self.ds + "Images.xcassets"] );
+			#gypfiletargetcondition['files'] = gypfiletarget['files'];
+
+			#gypfiletarget['inputs'] = [];
+			#gypfiletarget['inputs'].extend( [self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds + "Images.xcassets"] );
+			#gypfiletarget['inputs'].extend( [self.build_folder + self.ds + self.output + self.ds + "Images.xcassets"] );
+			#gypfiletarget['inputs'].extend( [self.ds + "Images.xcassets"] );
+			#gypfiletargetcondition['inputs'] = gypfiletarget['inputs'];
 
 			# add custom modules to GYP
 			print("Add external modules to project")
@@ -4291,7 +4322,16 @@ build:
 						print (moduleObj);
 
 						gypfiletargetcondition['include_dirs'].extend( moduleObj.platforms.ios.header_search_paths );
+
+						gypfiletarget['sources'].extend( moduleObj.platforms.ios.sources );
+
+						gypfiletargetcondition['xcode_framework_dirs'].extend( moduleObj.platforms.ios.framework_search_paths );
+						gypfiletargetcondition['xcode_settings']['FRAMEWORK_SEARCH_PATHS'].extend( moduleObj.platforms.ios.framework_search_paths );
+						gypfiletarget['xcode_framework_dirs'].extend( moduleObj.platforms.ios.framework_search_paths );
+
 						gypfiletargetcondition['ldflags'].extend( moduleObj.platforms.ios.library_search_paths );
+						gypfiletargetcondition['ldflags'].extend( moduleObj.platforms.ios.linker_flags );
+
 						gypfiletargetcondition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] += " ".join(moduleObj.platforms.ios.preprocessor_definitions);
 						gypfiletargetcondition['link_settings']['libraries'].extend( moduleObj.platforms.ios.libraries );
 					except OSError as exc:
@@ -4529,7 +4569,9 @@ build:
 			xcconfigfilecontents += "OTHER_CFLAGS = -x objective-c -fembed-bitcode;" + nl;
 			xcconfigfilecontents += "OTHER_CPLUSPLUSFLAGS = -x objective-c++ -fembed-bitcode;" + nl;
 			xcconfigfilecontents += "OTHER_LDFLAGS = -lbz2 -lcurl -lz;" + nl;
-			xcconfigfilecontents += "INFOPLIST_FILE = " + info_plist_filename;
+			xcconfigfilecontents += "INFOPLIST_FILE = " + info_plist_filename  + nl;
+			xcconfigfilecontents += "ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon" + nl;
+			xcconfigfilecontents += "ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage" + nl;
 
 
 			print("saving xcconfig file: " + xcconfigfile);
@@ -4595,337 +4637,9 @@ build:
 			# copy game resources in to project data folder
 			subprocess.call(["cp -r " + self.ark2d_dir + "/data " + self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds + "data/ark2d/"], shell=True); #libark2d
 
-			# generate icons
-			if "icon" in self.ios_config:
-				if "master_icon" in self.ios_config['icon'] and "use_master_icon" in self.ios_config['icon'] and self.ios_config['icon']['use_master_icon'] == True:
-
-					iconinterpolation = self.ios_config['icon']['master_icon_interpolation'];
-					icongenarr = [];
-					icongenobj = {};
-					icongenobj['from'] = self.ios_config['icon']['master_icon'];
-					icongenobj['from'] = util.str_replace(icongenobj['from'], [("%PREPRODUCTION_DIR%", self.game_preproduction_dir), ("%ARK2D_DIR%", self.ark2d_dir)]);
-					icongenobj['to'] = [
-						# iPhone Icon
-						{
-							"filename": self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds + "Icon.png",
-							"width" : 57,
-							"height": 57,
-							"interpolation": iconinterpolation
-						},
-						{
-							"filename": self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds + "Icon@2x.png",
-							"width" : 114,
-							"height": 114,
-							"interpolation": iconinterpolation
-						},
-						# iPhone Spotlight Icon
-						{
-							"filename": self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds + "Icon-Small.png",
-							"width" : 29,
-							"height": 29,
-							"interpolation": iconinterpolation
-						},
-						{
-							"filename": self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds + "Icon-Small@2x.png",
-							"width" : 58,
-							"height": 58,
-							"interpolation": iconinterpolation
-						},
-						{
-							"filename": self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds + "Icon-Small@3x.png",
-							"width" : 87,
-							"height": 87,
-							"interpolation": iconinterpolation
-						},
-						# iPad Icon
-						{
-							"filename": self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds + "Icon-72.png",
-							"width" : 72,
-							"height": 72,
-							"interpolation": iconinterpolation
-						},
-						{
-							"filename": self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds + "Icon-72@2x.png",
-							"width" : 144,
-							"height": 144,
-							"interpolation": iconinterpolation
-						},
-						# iPad Spotlight Icon
-						{
-							"filename": self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds + "Icon-Small-50.png",
-							"width" : 50,
-							"height": 50,
-							"interpolation": iconinterpolation
-						},
-						{
-							"filename": self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds + "Icon-Small-50@2x.png",
-							"width" : 100,
-							"height": 100,
-							"interpolation": iconinterpolation
-						},
-						# app store icon
-						{
-							"filename": self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds + "iTunesArtwork",
-							"width" : 512,
-							"height": 512,
-							"interpolation": iconinterpolation
-						},
-						{
-							"filename": self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds + "iTunesArtwork@2x",
-							"width" : 1024,
-							"height": 1024,
-							"interpolation": iconinterpolation
-						},
-
-						# iOS 7 shit
-						{
-							"filename": self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds + "Icon-40.png",
-							"width" : 40,
-							"height": 40,
-							"interpolation": iconinterpolation
-						},
-						{
-							"filename": self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds + "Icon-80.png",
-							"width" : 80,
-							"height": 80,
-							"interpolation": iconinterpolation
-						},
-						{
-							"filename": self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds + "Icon-120.png",
-							"width" : 120,
-							"height": 120,
-							"interpolation": iconinterpolation
-						},
-						{
-							"filename": self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds + "Icon-76.png",
-							"width" : 76,
-							"height": 76,
-							"interpolation": iconinterpolation
-						},
-						{
-							"filename": self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds + "Icon-152.png",
-							"width" : 152,
-							"height": 152,
-							"interpolation": iconinterpolation
-						},
-						{
-							"filename": self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds + "Icon-167.png",
-							"width" : 167,
-							"height": 167,
-							"interpolation": iconinterpolation
-						},
-						{
-							"filename": self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds + "Icon-60@3x.png",
-							"width" : 180,
-							"height": 180,
-							"interpolation": iconinterpolation
-						}
-
-
-					];
-					icongenarr.extend([icongenobj]);
-					#icongenstr = json.dumps(icongenarr, sort_keys=True, indent=0, new);
-
-
-					icongenstr = str(json.dumps(icongenarr, separators=(',',':'))).replace("\"", "\\\"");
-					icongenLINE = "java -jar -Xmx512m " + self.ark2d_dir + "/../Tools/Image\ Resizer/build/jar/ImageResizer.jar \"" + icongenstr + "\"";
-					print(icongenLINE);
-					subprocess.call([icongenLINE], shell=True);
-
-
-					#else:
-					pass;
-						#	if (config['osx']['android']['icon'] != ''):
-						#	subprocess.call(['cp ' + config['osx']['android']['icon'] + " " + rootPath+"/build/android/project/res/drawable/ic_launcher.png"], shell=True);
-						#else:
-						#	subprocess.call(['cp ' + ark2ddir + "/__preproduction/icon/512.png " + rootPath+"/build/android/project/res/drawable/ic_launcher.png"], shell=True);
-				else:
-
-					# copy individual files
-					print("Copying individual icon files.");
-					iphonedir = self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds;
-
-					icon_72 = self.ios_config['icon']['icon_72'];
-					icon_72_2x = self.ios_config['icon']['icon_72_2x'];
-					icon_small_50 = self.ios_config['icon']['icon_small_50'];
-					icon_small_50_2x = self.ios_config['icon']['icon_small_50_2x'];
-					icon_small = self.ios_config['icon']['icon_small'];
-					icon_small_2x = self.ios_config['icon']['icon_small_2x'];
-					icon = self.ios_config['icon']['icon'];
-					icon_2x = self.ios_config['icon']['icon_2x'];
-					icon_167 = self.ios_config['icon']['icon_167'];
-					itunes_artwork = self.ios_config['icon']['itunes_artwork'];
-					itunes_artwork_2x = self.ios_config['icon']['itunes_artwork_2x'];
-
-					icon_40 = self.ios_config['icon']['icon_40'];
-					icon_80 = self.ios_config['icon']['icon_80'];
-					icon_120 = self.ios_config['icon']['icon_120'];
-					icon_76 = self.ios_config['icon']['icon_76'];
-					icon_152 = self.ios_config['icon']['icon_152'];
-
-
-
-					icon_72 = util.str_replace(icon_72, [("%PREPRODUCTION_DIR%", self.game_preproduction_dir), ("%ARK2D_DIR%", self.ark2d_dir)]);
-					icon_72_2x = util.str_replace(icon_72_2x, [("%PREPRODUCTION_DIR%", self.game_preproduction_dir), ("%ARK2D_DIR%", self.ark2d_dir)]);
-					icon_small_50 = util.str_replace(icon_small_50, [("%PREPRODUCTION_DIR%", self.game_preproduction_dir), ("%ARK2D_DIR%", self.ark2d_dir)]);
-					icon_small_50_2x = util.str_replace(icon_small_50_2x, [("%PREPRODUCTION_DIR%", self.game_preproduction_dir), ("%ARK2D_DIR%", self.ark2d_dir)]);
-					icon_small = util.str_replace(icon_small, [("%PREPRODUCTION_DIR%", self.game_preproduction_dir), ("%ARK2D_DIR%", self.ark2d_dir)]);
-					icon_small_2x = util.str_replace(icon_small_2x, [("%PREPRODUCTION_DIR%", self.game_preproduction_dir), ("%ARK2D_DIR%", self.ark2d_dir)]);
-					icon = util.str_replace(icon, [("%PREPRODUCTION_DIR%", self.game_preproduction_dir), ("%ARK2D_DIR%", self.ark2d_dir)]);
-					icon_2x = util.str_replace(icon_2x, [("%PREPRODUCTION_DIR%", self.game_preproduction_dir), ("%ARK2D_DIR%", self.ark2d_dir)]);
-					icon_167 = util.str_replace(icon_167, [("%PREPRODUCTION_DIR%", self.game_preproduction_dir), ("%ARK2D_DIR%", self.ark2d_dir)]);
-					itunes_artwork = util.str_replace(itunes_artwork, [("%PREPRODUCTION_DIR%", self.game_preproduction_dir), ("%ARK2D_DIR%", self.ark2d_dir)]);
-					itunes_artwork_2x = util.str_replace(itunes_artwork_2x, [("%PREPRODUCTION_DIR%", self.game_preproduction_dir), ("%ARK2D_DIR%", self.ark2d_dir)]);
-
-					icon_40 = util.str_replace(icon_40, [("%PREPRODUCTION_DIR%", self.game_preproduction_dir), ("%ARK2D_DIR%", self.ark2d_dir)]);
-					icon_80 = util.str_replace(icon_80, [("%PREPRODUCTION_DIR%", self.game_preproduction_dir), ("%ARK2D_DIR%", self.ark2d_dir)]);
-					icon_120 = util.str_replace(icon_120, [("%PREPRODUCTION_DIR%", self.game_preproduction_dir), ("%ARK2D_DIR%", self.ark2d_dir)]);
-					icon_76 = util.str_replace(icon_76, [("%PREPRODUCTION_DIR%", self.game_preproduction_dir), ("%ARK2D_DIR%", self.ark2d_dir)]);
-					icon_152 = util.str_replace(icon_152, [("%PREPRODUCTION_DIR%", self.game_preproduction_dir), ("%ARK2D_DIR%", self.ark2d_dir)]);
-
-					subprocess.call(["cp -r " + icon_72 + " " + iphonedir + "Icon-72.png"], shell=True);
-					subprocess.call(["cp -r " + icon_72_2x + " " + iphonedir + "Icon-72@2x.png"], shell=True);
-					subprocess.call(["cp -r " + icon_small_50 + " " + iphonedir + "Icon-Small-50.png"], shell=True);
-					subprocess.call(["cp -r " + icon_small_50_2x + " " + iphonedir + "Icon-Small-50@2x.png"], shell=True);
-					subprocess.call(["cp -r " + icon_small + " " + iphonedir + "Icon-Small.png"], shell=True);
-					subprocess.call(["cp -r " + icon_small_2x + " " + iphonedir + "Icon-Small@2x.png"], shell=True);
-					subprocess.call(["cp -r " + icon + " " + iphonedir + "Icon.png"], shell=True);
-					subprocess.call(["cp -r " + icon_2x + " " + iphonedir + "Icon@2x.png"], shell=True);
-					subprocess.call(["cp -r " + icon_167 + " " + iphonedir + "Icon-167.png"], shell=True);
-					subprocess.call(["cp -r " + itunes_artwork + " " + iphonedir + "iTunesArtwork"], shell=True);
-					subprocess.call(["cp -r " + itunes_artwork_2x + " " + iphonedir + "iTunesArtwork@2x"], shell=True);
-
-					subprocess.call(["cp -r " + icon_40 + " " + iphonedir + "Icon-40.png"], shell=True);
-					subprocess.call(["cp -r " + icon_80 + " " + iphonedir + "Icon-80.png"], shell=True);
-					subprocess.call(["cp -r " + icon_120 + " " + iphonedir + "Icon-120.png"], shell=True);
-					subprocess.call(["cp -r " + icon_76 + " " + iphonedir + "Icon-76.png"], shell=True);
-					subprocess.call(["cp -r " + icon_152 + " " + iphonedir + "Icon-152.png"], shell=True);
-
-
-			# generate defaults
-			print("Generating defaults...")
-			if "defaults" in self.ios_config:
-				if "use_master" in self.ios_config['defaults']:
-					if (self.ios_config['defaults']['use_master'] == True):
-						# do
-						startdir = self.game_dir + self.ds + self.build_folder + self.ds + self.output + self.ds;
-						defaultsgenarr = [];
-						defaultsgenobj = {};
-						defaultsgenobj['from'] = self.ios_config['defaults']['master'];
-						defaultsgenobj['from'] = util.str_replace(defaultsgenobj['from'], [("%PREPRODUCTION_DIR%", self.game_preproduction_dir), ("%ARK2D_DIR%", self.ark2d_dir)]);
-						defaultsgenobj['to'] = [
-							{
-								"filename": startdir + "Default.png",
-								"width" : 320,
-								"height": 480,
-								"interpolation": "nearest_neighbour"
-							},
-							{
-								"filename": startdir + "Default@2x.png",
-								"width" : 640,
-								"height": 960,
-								"interpolation": "nearest_neighbour"
-							},
-							{
-								"filename": startdir + "Default-568h@2x.png",
-								"width" : 640,
-								"height": 1136,
-								"interpolation": "nearest_neighbour"
-							},
-							{
-								"filename": startdir + "Default-Landscape.png",
-								"width" : 1024,
-								"height": 768,
-								"interpolation": "nearest_neighbour"
-							},
-							{
-								"filename": startdir + "Default-Landscape@2x.png",
-								"width" : 2048,
-								"height": 1536,
-								"interpolation": "nearest_neighbour"
-							},
-							{
-								"filename": startdir + "Default-Portrait.png",
-								"width" : 768,
-								"height": 1024,
-								"interpolation": "nearest_neighbour"
-							},
-							{
-								"filename": startdir + "Default-Portrait@2x.png",
-								"width" : 1536,
-								"height": 2048,
-								"interpolation": "nearest_neighbour"
-							},
-							{
-								"filename": startdir + "Default-RetinaHD55.png",
-								"width" : 1242,
-								"height": 2208,
-								"interpolation": "nearest_neighbour"
-							},
-							{
-								"filename": startdir + "Default-RetinaHD47.png",
-								"width" : 750,
-								"height": 1334,
-								"interpolation": "nearest_neighbour"
-							},
-							{
-								"filename": startdir + "Default-RetinaHD55-Landscape.png",
-								"width" : 2208,
-								"height": 1242,
-								"interpolation": "nearest_neighbour"
-							},
-							{
-								"filename": startdir + "Default-Portrait-IPhone.png",
-								"width" : 320,
-								"height": 480,
-								"interpolation": "nearest_neighbour"
-							},
-							{
-								"filename": startdir + "Default-Portrait-IPhone@2x.png",
-								"width" : 640,
-								"height": 960,
-								"interpolation": "nearest_neighbour"
-							},
-							{
-								"filename": startdir + "Default-Portrait-IPhone4@2x.png",
-								"width" : 640,
-								"height": 1136,
-								"interpolation": "nearest_neighbour"
-							},
-							{
-								"filename": startdir + "Default-Portrait-IPhoneX.png",
-								"width" : 1125,
-								"height": 2436,
-								"interpolation": "nearest_neighbour"
-							},
-							{
-								"filename": startdir + "Default-Landscape-IPhoneX.png",
-								"width" : 2436,
-								"height": 1125,
-								"interpolation": "nearest_neighbour"
-							},
-							{
-								"filename": startdir + "Default-Portrait-IPhone8Plus.png",
-								"width" : 1242,
-								"height": 2208,
-								"interpolation": "nearest_neighbour"
-							},
-							{
-								"filename": startdir + "Default-Landscape-IPhone8Plus.png",
-								"width" : 2208,
-								"height": 1242,
-								"interpolation": "nearest_neighbour"
-							}
-						];
-						defaultsgenarr.extend([defaultsgenobj]);
-
-						defaultsgenstr = str(json.dumps(defaultsgenarr, separators=(',',':'))).replace("\"", "\\\"");
-						defaultsgenLINE = "java -jar -Xmx512m " + self.ark2d_dir + "/../Tools/Image\ Resizer/build/jar/ImageResizer.jar \"" + defaultsgenstr + "\"";
-						print(defaultsgenLINE);
-						subprocess.call([defaultsgenLINE], shell=True);
-					pass;
-				pass;
-			print("Done generating defaults.");
+			iosBuild = IOSBuild(self);
+			iosBuild.generateAppIcons();
+			iosBuild.generateLaunchImages();
 
 
 
@@ -5094,8 +4808,8 @@ build:
 			print ("Android sdk version: " + str(appplatformno));
 
 			self.android_billing = self.android_config['billing'] or False;
-			if (self.android_billing):
-				self.android_config['gradle_libraries'] = ["market_licensing"];
+			#if (self.android_billing):
+			#	self.android_config['gradle_libraries'] = ["market_licensing"];
 
 			javaPackageName = "org." + self.developer_name_safe + "." + self.game_name_safe;
 
@@ -5236,6 +4950,55 @@ build:
 			#if "libs" not in config['android']:
 			#	config['android']['libs'] = [];
 
+			self.ldflags = [];
+			edits_shared_libraries_modules = "";
+			print("Add external modules")
+			if "external_modules" in self.target_config:
+				for module in self.target_config['external_modules']:
+					print module
+
+					try:
+						moduleJsonFilename = module + self.ds + "module.json"
+						f = open(moduleJsonFilename, "r")
+						fcontents = f.read();
+						f.close();
+						fjson = json.loads(fcontents);
+
+						print  (fjson);
+						moduleObj = Module(self, module);
+						moduleObj.initFromConfig(fjson);
+
+						print (moduleObj);
+
+						self.include_dirs.extend( moduleObj.platforms.android.header_search_paths );
+
+						self.src_files.extend(moduleObj.platforms.android.sources);
+
+						#gypfiletargetcondition['ldflags'].extend( moduleObj.platforms.ios.library_search_paths );
+						self.ldflags.extend( moduleObj.platforms.android.linker_flags );
+
+						self.preprocessor_definitions.extend( moduleObj.platforms.android.preprocessor_definitions )
+						#gypfiletargetcondition['link_settings']['libraries'].extend( moduleObj.platforms.ios.libraries );
+
+						#for lib in moduleObj.platforms.android.libraries:
+						#	edits_shared_libraries_modules += "implementation " + lib + "\n";;
+
+						for aar in fjson['platforms']['android']['aars']:
+							aar = util.str_replace(aar, self.tag_replacements);
+							aar = util.str_replace(aar, [("%MODULE_DIR%", moduleObj.root)]);
+							aar_name = util.get_str_filename_no_ext(aar);
+							edits_shared_libraries_modules += "implementation project(':" + aar_name + "')\n";
+							self.aars.extend([aar_name]);
+							self.aar_paths.extend([aar]);
+
+
+
+					except OSError as exc:
+						print("Module config was not valid.");
+						print(exc);
+						exit(0);
+
+
 			print("NDK");
 			print("Creating Android.mk");
 			android_make_file = "";
@@ -5243,13 +5006,20 @@ build:
 			android_make_file += "include $(CLEAR_VARS)" + nl+nl;
 			android_make_file += "LOCAL_MODULE    := " + self.game_name_safe +  nl+nl; # Here we give our module name and source file(s)
 			android_make_file += "LOCAL_C_INCLUDES := ";
+			android_make_file += self.ark2d_dir + "/lib/includes/ ";
 			android_make_file += self.ark2d_dir + "/src/ARK2D/vendor/android/libzip/jni/ ";
+			android_make_file += self.ark2d_dir + "/src/ARK2D/vendor/android/openal/jni/include ";
 			android_make_file += self.ark2d_dir + "/src/ARK2D/vendor/spine/includes ";
 			android_make_file += self.ark2d_dir + "/src/ARK2D/vendor/angelscript ";
 			android_make_file += self.ark2d_dir + "/src";
+			for h in self.include_dirs:
+				android_make_file += h + " ";
 			android_make_file += nl;
 
 			android_make_file += "LOCAL_CFLAGS := -DARK2D_ANDROID ";
+			android_make_file += "-DGAME_DIR=" + self.game_dir + " ";
+			android_make_file += "-DGAME_SRC_DIR=" + self.game_src_dir + " ";
+
 			if (self.platformOn == "windows"):
 				android_make_file += "-DARK2D_ANDROID_ON_WINDOWS ";
 			elif (self.platformOn == "osx"):
@@ -5265,6 +5035,9 @@ build:
 				android_make_file += " -DARK2D_DEBUG -DDEBUG -DNDK_DEBUG -O0 ";
 			else:
 				android_make_file += " -O3 "; #-fno-strict-aliasing -mfpu=vfp -mfloat-abi=softfp ";
+
+			for h in self.preprocessor_definitions:
+				android_make_file += " -D" + h;
 			android_make_file += nl+nl;
 
 			android_make_file += "LOCAL_DEFAULT_CPP_EXTENSION := cpp" + nl+nl;
@@ -5278,7 +5051,10 @@ build:
 			android_make_file += nl;
 			#android_make_file += "LOCAL_LDLIBS := -lGLESv1_CM -ldl -llog -lz -lfreetype -lopenal -lark2d" + nl+nl;
 			#android_make_file += "LOCAL_LDLIBS := -lGLESv2 -lGLESv1_CM -ldl -llog -lz -lfreetype -lopenal -lark2d" + nl+nl;
-			android_make_file += "LOCAL_LDLIBS := -lGLESv2 -lEGL -ldl -llog -lz -lopenal -lark2d "; #-lfreetype
+			android_make_file += "LOCAL_LDLIBS := -lGLESv2 -lEGL -ldl -llog -lz -lopenal -lzip -langelscript -lark2d "; #-lfreetype
+			for h in self.ldflags:
+				android_make_file += "-l" + h + " ";
+
 
 			# custom game libraries (fmod, and things)
 			lib_search_path = "";
@@ -5294,7 +5070,7 @@ build:
 					if "jars" in gamelibrary:
 						for gamelibraryjar in gamelibrary['jars']:
 							self.android_libs.extend([gamelibraryjar]);
-							edits_shared_libraries_gradlejars += "compile files('../../../../" + gamelibraryjar + "')\n";
+							edits_shared_libraries_gradlejars += "implementation files('../../../../" + gamelibraryjar + "')\n";
 
 					if "armeabi" in gamelibrary:
 						path = gamelibrary['armeabi'];
@@ -5357,12 +5133,16 @@ build:
 			#
 			if (android_projectType == 'intellij'):
 
+				intellij_aar_template_folder = self.ark2d_dir + self.ds + "lib" + self.ds + "android" + self.ds + "library_projects" + self.ds + "aar_template";
 				intellij_template_folder = self.ark2d_dir + self.ds + "lib" + self.ds + "android" + self.ds + "project-intellj";
 				intellij_folder = rootPath+self.ds+"build" + self.ds + self.output + self.ds + "project-intellij";
 
 				# write settings.gradle
 				f = open(intellij_folder + self.ds + "settings.gradle", "w");
 				f.write("include ':" + self.game_name_safe + "'\n");
+
+				for aar in self.aars:
+					f.write("include ':" + aar + "'\n");
 
 				if 'gradle_libraries' in self.android_config:
 					for gradle_library in self.android_config['gradle_libraries']:
@@ -5379,6 +5159,16 @@ build:
 				f = open(intellij_folder + self.ds + "local.properties", "w");
 				f.write("sdk.dir=" + self.android_sdkdir);
 				f.close();
+
+				# copy aar projects in...
+				for aar in self.aar_paths:
+					aar_name = util.get_str_filename_no_ext(aar);
+					module_dir = intellij_folder + self.ds + aar_name;
+					util.makeDirectories([module_dir]);
+					util.copyfilewithreplacements(intellij_aar_template_folder + self.ds + "build.gradle", module_dir + self.ds + "build.gradle", [("%MODULE_NAME%", aar_name)]);
+					util.copyfilewithreplacements(intellij_aar_template_folder + self.ds + "module.iml", module_dir + self.ds + aar_name + ".iml", [("%MODULE_NAME%", aar_name)]);
+					shutil.copy2(aar, module_dir + self.ds + aar_name + ".aar" );
+
 
 				# copy libraries in.
 				if 'gradle_libraries' in self.android_config:
@@ -5628,7 +5418,8 @@ build:
 				androidManifestContents += "	android:versionCode=\"" + versionCode + "\" " + nl;
 				androidManifestContents += "	android:versionName=\"" + self.game_version + "\"> " + nl;
 
-				androidManifestContents += "	<uses-sdk android:minSdkVersion=\"" + minSdkVersion + "\" android:targetSdkVersion=\"" + targetSdkVersion + "\"/>" + nl;
+				#androidManifestContents += "	<uses-sdk android:minSdkVersion=\"" + minSdkVersion + "\" android:targetSdkVersion=\"" + targetSdkVersion + "\"/>" + nl;
+				#androidManifestContents += "	<uses-sdk />" + nl;
 				androidManifestContents += "	<uses-feature android:glEsVersion=\"0x00020000\" android:required=\"true\" />" + nl;
 				for permission in self.android_config['permissions']:
 					androidManifestContents += "	<uses-permission android:name=\"android.permission." + permission + "\" />" + nl;
@@ -5761,7 +5552,8 @@ build:
 
 				else:
 					if (self.android_config['icon']['icon'] != ''):
-						subprocess.call(['cp ' + self.android_config['icon']['icon'] + " " + project_res_dir + "/drawable/" + ic_launcher_name], shell=True);
+						icon_expanded = util.str_replace(self.android_config['icon']['icon'], self.tag_replacements);
+						subprocess.call(['cp ' + icon_expanded + " " + project_res_dir + "/drawable/" + ic_launcher_name], shell=True);
 					#else:
 					#	subprocess.call(['cp ' + self.ark2d_dir + "/__preproduction/icon/512.png " + rootPath+"/build/android/project-eclipse/res/drawable/ic_launcher.png"], shell=True);
 
@@ -5956,6 +5748,7 @@ build:
 				fcontents = util.str_replace(fcontents, editsIronsource);
 				fcontents = util.str_replace(fcontents, editsGoogleAnalytics);
 				fcontents = util.str_replace(fcontents, [("%ADDITIONAL_JAR_FILES%", edits_shared_libraries_gradlejars)]);
+				fcontents = util.str_replace(fcontents, [("%ADDITIONAL_MODULES%", edits_shared_libraries_modules)]);
 				f = open(intellij_folder + self.ds + self.game_name_safe + self.ds + "build.gradle", "w");
 				f.write(fcontents);
 				f.close();
@@ -6187,7 +5980,8 @@ build:
 			# ark2d
 			#
 			print("copying in ark2d libraries");
-			ark2d_built_libs = self.ark2d_dir+self.ds+"build"+self.ds+"android"+self.ds+"libs";
+			#ark2d_built_libs = self.ark2d_dir+self.ds+"build"+self.ds+"android"+self.ds+"libs";
+			ark2d_built_libs = self.ark2d_dir+self.ds+"build"+self.ds+"android"+self.ds+"local";
 			self.mycopytree(ark2d_built_libs+self.ds+"armeabi-v7a", project_nlib_dir+self.ds+"armeabi-v7a");
 			if (not self.debug):
 				self.mycopytree(ark2d_built_libs+self.ds+"armeabi", project_nlib_dir+self.ds+"armeabi");
@@ -6262,8 +6056,9 @@ build:
 			self.mycopytree(ndkprojectpath + self.ds + 'src' + self.ds + 'ARK2D' + self.ds + 'vendor' + self.ds + 'android' + self.ds + 'freetype' + self.ds + 'jni' + self.ds + 'include', self.android_ndkdir + self.ds + "platforms"+self.ds + ndkappplatform+self.ds+"arch-arm" + self.ds + "usr" + self.ds + "include");
 			self.mycopytree(ndkprojectpath + self.ds + 'src' + self.ds + 'ARK2D' + self.ds + 'vendor' + self.ds + 'android' + self.ds + 'freetype' + self.ds + 'jni' + self.ds + 'include', self.android_ndkdir + self.ds + "platforms"+self.ds + ndkappplatform+self.ds+"arch-x86" + self.ds + "usr" + self.ds + "include");
 
-
-
+	"""
+			# full rebuild with logs...:
+			# -B NDK_LOG=1
 			print("Compiling vendor sources (freetype)");
 			libfreetypedir = ndkprojectpath + self.ds + "src" + self.ds + "ARK2D" + self.ds + "vendor" + self.ds + "android" + self.ds + "freetype";
 			compilefreetype1 = self.android_ndkdir + self.ds + "ndk-build NDK_PROJECT_PATH=" + libfreetypedir +" APP_PROJECT_PATH=" + libfreetypedir + " APP_BUILD_SCRIPT=" + libfreetypedir + self.ds + "jni" + self.ds + "Android.mk APP_PLATFORM=" + ndkappplatform;
@@ -6271,9 +6066,10 @@ build:
 			subprocess.call([compilefreetype1], shell=True);
 			#subprocess.call(['cp -r ' + libfreetypedir + "/obj/local/armeabi-v7a/libfreetype.a " + self.android_ndkdir + "/platforms/"+ndkappplatform+"/arch-arm/usr/lib"], shell=True);
 			shutil.copy(libfreetypedir + self.ds + "obj" + self.ds + "local" + self.ds + "armeabi-v7a" + self.ds + "libfreetype.a", self.android_ndkdir + self.ds + "platforms" + self.ds + ndkappplatform+ self.ds + "arch-arm" + self.ds + "usr" + self.ds + "lib" + self.ds);
+			shutil.copy(libfreetypedir + self.ds + "obj" + self.ds + "local" + self.ds + "x86" + self.ds + "libfreetype.a", self.android_ndkdir + self.ds + "platforms" + self.ds + ndkappplatform+ self.ds + "arch-x86" + self.ds + "usr" + self.ds + "lib" + self.ds);
 
 			#return;
-			"""
+
 
 			#openal
 			print("copying vendor headers (openal)");
@@ -6341,6 +6137,7 @@ build:
 			#android_make_file += "LOCAL_C_INCLUDES := $(LOCAL_PATH)/../libzip/ $(LOCAL_PATH)/../libpng/" + nl;
 			android_make_file += "LOCAL_C_INCLUDES := ";
 			android_make_file += "$(LOCAL_PATH)" + mds + "src" + mds + "ARK2D" + mds + "vendor" + mds + "android" + mds + "libzip" + mds + "jni" + mds + " ";
+			android_make_file += "$(LOCAL_PATH)/lib/includes ";
 			android_make_file += "$(LOCAL_PATH)/src/ARK2D/vendor/spine/includes ";
 			android_make_file += "$(LOCAL_PATH)/src/ARK2D/vendor/angelscript ";
 			android_make_file += nl;
@@ -6373,7 +6170,7 @@ build:
 			android_make_file += nl;
 			#android_make_file += "LOCAL_LDLIBS := -lGLESv1_CM -ldl -llog -lz -lfreetype -lopenal -lzip" + nl+nl;
 			#android_make_file += "LOCAL_LDLIBS := -lGLESv2 -lGLESv1_CM -ldl -llog -lz -lfreetype -lopenal -lzip" + nl+nl;
-			android_make_file += "LOCAL_LDLIBS := -lGLESv2 -lEGL -ldl -llog -lz -lopenal -lzip -langelscript " + nl+nl; # -lfreetype
+			android_make_file += "LOCAL_LDLIBS := -lGLESv2 -lEGL -ldl -llog -landroid -lz -lfreetype -lopenal -lzip -langelscript " + nl+nl; # -lfreetype
 			#android_make_file += "LOCAL_SHARED_LIBRARIES :=   " + nl+nl;
 
 

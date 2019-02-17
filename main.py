@@ -118,6 +118,7 @@ if __name__ == "__main__":
 	onlyspritesheets = False;
 	onlygeneratestrings = False;
 	onlyassets = False;
+	dogradle = False;
 	newconfig = False;
 	compileproj = False;
 	selecttarget = False;
@@ -276,6 +277,9 @@ if __name__ == "__main__":
 
 
 
+
+
+
 			print("---");
 			print("Opening target config file: ");
 			print(dir + "/configs/" + target);
@@ -300,6 +304,7 @@ if __name__ == "__main__":
 
 			a.ark2d_dir = ark2d_dir;
 			a.game_dir = dir;
+			a.game_src_dir = dir + "/src/";
 			a.game_name = game_config['game']['name'];
 			a.game_name_safe = game_config['game']['name_safe'];
 			#a.game_short_name = game_config['game']['class_name'];
@@ -351,6 +356,12 @@ if __name__ == "__main__":
 			if (onlygeneratestrings):
 				a.generateStrings();
 				exit(0);
+
+			dogradle = False;
+			if (a.platform == "android"):
+				print("Gradle build? [Y/N]");
+				t = raw_input("> ");
+				dogradle = True if t.lower() == "y" else False;
 
 			if (clean == True or target_config['clean'] == True):
 				a.clean();
@@ -475,6 +486,10 @@ if __name__ == "__main__":
 
 			a.start();
 
+			if (dogradle):
+				subprocess.call(["build/android/project-intellij/gradlew -p build/android/project-intellij/ assembleDebug"], shell=True);
+				subprocess.call(["build/android/project-intellij/gradlew -p build/android/project-intellij/ installDebug"], shell=True);
+
 
 			print("---");
 			print("Done");
@@ -483,6 +498,7 @@ if __name__ == "__main__":
 		except Exception as exc:
 			print("configs/" + target + " is invalid or does not exist.");
 			print(exc);
+			util.printException();
 			exit(1);
 		except SystemExit as exc:
 			pass;
