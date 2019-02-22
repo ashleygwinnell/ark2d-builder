@@ -534,6 +534,7 @@ class IOSBuild:
 
 
 			# add custom modules to GYP
+			moduleLinkerFlags = "";
 			print("Add external modules to project")
 			if "external_modules" in self.builder.target_config:
 				for module in self.builder.target_config['external_modules']:
@@ -562,6 +563,8 @@ class IOSBuild:
 
 						gypfiletargetcondition['ldflags'].extend( moduleObj.platforms.ios.library_search_paths );
 						gypfiletargetcondition['ldflags'].extend( moduleObj.platforms.ios.linker_flags );
+
+						moduleLinkerFlags += " ".join(moduleObj.platforms.ios.linker_flags);
 
 						gypfiletargetcondition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] += " ".join(moduleObj.platforms.ios.preprocessor_definitions);
 						gypfiletargetcondition['link_settings']['libraries'].extend( moduleObj.platforms.ios.libraries );
@@ -799,7 +802,7 @@ class IOSBuild:
 			xcconfigfilecontents += "ALWAYS_SEARCH_USER_PATHS = NO;" + nl;
 			xcconfigfilecontents += "OTHER_CFLAGS = -x objective-c -fembed-bitcode;" + nl;
 			xcconfigfilecontents += "OTHER_CPLUSPLUSFLAGS = -x objective-c++ -fembed-bitcode;" + nl;
-			xcconfigfilecontents += "OTHER_LDFLAGS = -lbz2 -lcurl -lz;" + nl;
+			xcconfigfilecontents += "OTHER_LDFLAGS = " + moduleLinkerFlags + " -lbz2 -lcurl -lz;" + nl;
 			xcconfigfilecontents += "INFOPLIST_FILE = " + info_plist_filename  + nl;
 			xcconfigfilecontents += "ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon" + nl;
 			xcconfigfilecontents += "ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage" + nl;
