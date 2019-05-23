@@ -38,7 +38,7 @@ class Util:
 
 	def makeDirectories(self, dir):
 		for thisstr in dir:
-			print("mkdir " + thisstr);
+			#print("mkdir " + thisstr);
 			try:
 				os.makedirs(thisstr);
 			except OSError as exc:
@@ -158,6 +158,7 @@ class Util:
 			existing_contents = f2.read(); f2.close();
 			existing_hash = hashlib.md5(existing_contents).hexdigest();
 		except:
+			existing_hash = "";
 			pass;
 
 		if new_hash != existing_hash:

@@ -12,10 +12,13 @@ import shutil
 from Util import *
 util = Util();
 
+from Module import *
+
 class IOSBuild:
 
 	def __init__(self, builder):
 		self.builder = builder;
+		self.deployment_target = "12.1";
 		pass;
 
 	def start(self):
@@ -80,7 +83,7 @@ class IOSBuild:
 	          	'/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS4.3.sdk/System/Library/Frameworks/CoreGraphics.framework',
 	          	#'/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS4.3.sdk/System/Library/Frameworks/CoreText.framework',
 	          	#'/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS4.3.sdk/System/Library/Frameworks/UIKit.framework',
-	          	"/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS6.0.sdk/System/Library/Frameworks/UIKit.framework",
+	          	"/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/System/Library/Frameworks/UIKit.framework",
 	          	'/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS4.3.sdk/System/Library/Frameworks/Foundation.framework',
 	          	'/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS4.3.sdk/System/Library/Frameworks/QuartzCore.framework',
 	          	'/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS4.3.sdk/System/Library/Frameworks/OpenGLES.framework'
@@ -116,8 +119,8 @@ class IOSBuild:
 			];
 
 			gypfiletargetcondition['xcode_settings'] = {};
-			gypfiletargetcondition['xcode_settings']['ARCHS'] = "armv6 armv7 arm64";
-			gypfiletargetcondition['xcode_settings']['IPHONEOS_DEPLOYMENT_TARGET'] = '6.0';
+			gypfiletargetcondition['xcode_settings']['ARCHS'] = "$(ARCHS_STANDARD)"; #"armv6 armv7 arm64";
+			gypfiletargetcondition['xcode_settings']['IPHONEOS_DEPLOYMENT_TARGET'] = self.deployment_target;
 			gypfiletargetcondition['xcode_settings']['SDKROOT'] = "iphoneos";
 			gypfiletargetcondition['xcode_settings']['TARGETED_DEVICE_FAMILY'] = "1,2";
 			gypfiletargetcondition['xcode_settings']['CLANG_CXX_LANGUAGE_STANDARD'] = "c++0x";
@@ -134,7 +137,7 @@ class IOSBuild:
 			#'xcode_settings': {
 	        #  'INFOPLIST_FILE' : '../experimental/iOSSampleApp/iOSSampleApp-Info.plist',
 	        #  'ARCHS' : 'armv6 armv7',
-	        #  'IPHONEOS_DEPLOYMENT_TARGET' : '6.0',
+	        #  'IPHONEOS_DEPLOYMENT_TARGET' : self.deployment_target,
 	        #  'SDKROOT' : 'iphoneos',
 	        #  'TARGETED_DEVICE_FAMILY' : '1,2',
 	        #  'USER_HEADER_SEARCH_PATHS' : '../../gpu/include/** ../../include/**',
@@ -345,11 +348,13 @@ class IOSBuild:
 	          	'$(SDKROOT)/System/Library/Frameworks/OpenGLES.framework',
 	          	'$(SDKROOT)/System/Library/Frameworks/UIKit.framework',
 	          	'$(SDKROOT)/System/Library/Frameworks/StoreKit.framework',
-	          	#self.builder.ark2d_dir + '/lib/iphone/libfreetype.a',
+	          	self.builder.ark2d_dir + '/lib/iphone/libfreetype.a',
+	          	self.builder.ark2d_dir + '/lib/iphone/libfreetype-simulator.a',
 	          	self.builder.ark2d_dir + '/lib/iphone/libangelscriptd.a',
 	          	'$(SDKROOT)/System/usr/lib/libsqlite3.tbd', #requried for GA
 	          	self.builder.ark2d_dir + '/lib/iphone/libGoogleAnalyticsServices.a',
-	          	self.builder.ark2d_dir + '/build/ios/DerivedData/ark2d-ios/Build/Products/Default-iphoneos/libark2d-iPhone.a'
+	          	self.builder.ark2d_dir + '/build/ios/DerivedData/ark2d-ios/Build/Products/Default-iphoneos/libark2d-iPhone.a',
+	          	self.builder.ark2d_dir + '/build/ios/DerivedData/ark2d-ios/Build/Products/Default-iphonesimulator/libark2d-iPhonesimulator.a'
 			];
 
 
@@ -369,8 +374,8 @@ class IOSBuild:
 			gypfiletargetcondition['xcode_framework_dirs'] = [];
 
 			gypfiletargetcondition['xcode_settings'] = {};
-			gypfiletargetcondition['xcode_settings']['ARCHS'] = "armv6 armv7 arm64";
-			gypfiletargetcondition['xcode_settings']['IPHONEOS_DEPLOYMENT_TARGET'] = '6.0';
+			gypfiletargetcondition['xcode_settings']['ARCHS'] = "$(ARCHS_STANDARD)";#"armv6 armv7 arm64";
+			gypfiletargetcondition['xcode_settings']['IPHONEOS_DEPLOYMENT_TARGET'] = self.deployment_target;
 			gypfiletargetcondition['xcode_settings']['SDKROOT'] = "iphoneos";
 			gypfiletargetcondition['xcode_settings']['TARGETED_DEVICE_FAMILY'] = "1,2";
 			gypfiletargetcondition['xcode_settings']['CLANG_CXX_LANGUAGE_STANDARD'] = "c++0x";
@@ -399,6 +404,7 @@ class IOSBuild:
 
 				"data/",				#ark2d and game data
 				"Images.xcassets/",		#icons/launchimages
+				"Launch.storyboard",#launch-storyboard
 
 				# "Icon.png",				#iphone
 				# "Icon@2x.png",			#iphone-retina
@@ -491,7 +497,7 @@ class IOSBuild:
 
 			gypfiletarget_simulator_condition['xcode_settings'] = {};
 			gypfiletarget_simulator_condition['xcode_settings']['ARCHS'] = "armv6 armv7";
-			gypfiletarget_simulator_condition['xcode_settings']['IPHONEOS_DEPLOYMENT_TARGET'] = '6.0';
+			gypfiletarget_simulator_condition['xcode_settings']['IPHONEOS_DEPLOYMENT_TARGET'] = self.deployment_target;
 			gypfiletarget_simulator_condition['xcode_settings']['SDKROOT'] = "iphonesimulator";
 			gypfiletarget_simulator_condition['xcode_settings']['TARGETED_DEVICE_FAMILY'] = "1,2";
 			gypfiletarget_simulator_condition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] = "ARK2D_IPHONE";
@@ -534,7 +540,8 @@ class IOSBuild:
 
 
 			# add custom modules to GYP
-			moduleLinkerFlags = "";
+			self.moduleLinkerFlags = "";
+
 			print("Add external modules to project")
 			if "external_modules" in self.builder.target_config:
 				for module in self.builder.target_config['external_modules']:
@@ -548,26 +555,15 @@ class IOSBuild:
 						fjson = json.loads(fcontents);
 
 						print  (fjson);
+
 						moduleObj = Module(self.builder, module);
 						moduleObj.initFromConfig(fjson);
 
 						print (moduleObj);
 
-						gypfiletargetcondition['include_dirs'].extend( moduleObj.platforms.ios.header_search_paths );
+						moduleObj.addToGypConfig('ios', gypfiletarget, gypfiletargetcondition);
+						ModuleUtil.addToIOSBuild(moduleObj, self);
 
-						gypfiletarget['sources'].extend( moduleObj.platforms.ios.sources );
-
-						gypfiletargetcondition['xcode_framework_dirs'].extend( moduleObj.platforms.ios.framework_search_paths );
-						gypfiletargetcondition['xcode_settings']['FRAMEWORK_SEARCH_PATHS'].extend( moduleObj.platforms.ios.framework_search_paths );
-						gypfiletarget['xcode_framework_dirs'].extend( moduleObj.platforms.ios.framework_search_paths );
-
-						gypfiletargetcondition['ldflags'].extend( moduleObj.platforms.ios.library_search_paths );
-						gypfiletargetcondition['ldflags'].extend( moduleObj.platforms.ios.linker_flags );
-
-						moduleLinkerFlags += " ".join(moduleObj.platforms.ios.linker_flags);
-
-						gypfiletargetcondition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] += " ".join(moduleObj.platforms.ios.preprocessor_definitions);
-						gypfiletargetcondition['link_settings']['libraries'].extend( moduleObj.platforms.ios.libraries );
 					except OSError as exc:
 						print("Module config was not valid.");
 						print(exc);
@@ -670,6 +666,9 @@ class IOSBuild:
 			info_plist_contents += '	<key>CFBundleExecutable</key>' + nl;
 			info_plist_contents += '	<string>${EXECUTABLE_NAME}</string>' + nl;
 
+			info_plist_contents += '	<key>UILaunchStoryboardName</key>' + nl;
+			info_plist_contents += '	<string>Launch</string>' + nl;
+
 			info_plist_contents += '	<key>CFBundleIconFile</key>' + nl;
 			info_plist_contents += '	<string></string>' + nl;
 
@@ -726,17 +725,17 @@ class IOSBuild:
 			info_plist_contents += '	<key>CFBundleIdentifier</key>' + nl;
 			info_plist_contents += '	<string>org.' + companynamesafe + '.' + projectname + '</string>' + nl;
 			info_plist_contents += '	<key>CFBundleInfoDictionaryVersion</key>' + nl;
-			info_plist_contents += '	<string>6.0</string>' + nl;
+			info_plist_contents += '	<string>' + self.deployment_target + '</string>' + nl;
 			info_plist_contents += '	<key>CFBundleName</key>' + nl;
 			info_plist_contents += '	<string>${PRODUCT_NAME}</string>' + nl;
 			info_plist_contents += '	<key>CFBundlePackageType</key>' + nl;
 			info_plist_contents += '	<string>APPL</string>' + nl;
 			info_plist_contents += '	<key>CFBundleShortVersionString</key>' + nl;
-			info_plist_contents += '	<string>1.0</string>' + nl;
+			info_plist_contents += '	<string>' + self.builder.game_version + '</string>' + nl;
 			info_plist_contents += '	<key>CFBundleSignature</key>' + nl;
 			info_plist_contents += '	<string>????</string>' + nl;
 			info_plist_contents += '	<key>CFBundleVersion</key>' + nl;
-			info_plist_contents += '	<string>1.0</string>' + nl;
+			info_plist_contents += '	<string>' + self.builder.game_version + '</string>' + nl;
 			info_plist_contents += '	<key>LSRequiresIPhoneOS</key>' + nl;
 			info_plist_contents += '	<true/>' + nl;
 			info_plist_contents += '	<key>UIPrerenderedIcon</key>' + nl;
@@ -802,7 +801,7 @@ class IOSBuild:
 			xcconfigfilecontents += "ALWAYS_SEARCH_USER_PATHS = NO;" + nl;
 			xcconfigfilecontents += "OTHER_CFLAGS = -x objective-c -fembed-bitcode;" + nl;
 			xcconfigfilecontents += "OTHER_CPLUSPLUSFLAGS = -x objective-c++ -fembed-bitcode;" + nl;
-			xcconfigfilecontents += "OTHER_LDFLAGS = " + moduleLinkerFlags + " -lbz2 -lcurl -lz;" + nl;
+			xcconfigfilecontents += "OTHER_LDFLAGS = " + self.moduleLinkerFlags + " -lbz2 -lcurl -lz;" + nl;
 			xcconfigfilecontents += "INFOPLIST_FILE = " + info_plist_filename  + nl;
 			xcconfigfilecontents += "ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon" + nl;
 			xcconfigfilecontents += "ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage" + nl;
@@ -1160,12 +1159,21 @@ class IOSBuild:
 
 	def generateLaunchImages(self):
 
+		startdir = self.builder.game_dir + self.builder.ds + self.builder.build_folder + self.builder.ds + self.builder.output + self.builder.ds;
+
+		print("Copying storyboard from ark2d lib...")
+		print (self.builder.ark2d_dir + "/lib/iphone/Launch.storyboard");
+		print (startdir + "Launch.storyboard");
+		util.copyfileifdifferent(
+			self.builder.ark2d_dir + "/lib/iphone/Launch.storyboard",
+			startdir + "Launch.storyboard"
+		);
+
 		print("Generating launchimages...")
 		if "defaults" in self.builder.ios_config:
 			if "use_master" in self.builder.ios_config['defaults']:
 				if (self.builder.ios_config['defaults']['use_master'] == True):
 					# do
-					startdir = self.builder.game_dir + self.builder.ds + self.builder.build_folder + self.builder.ds + self.builder.output + self.builder.ds;
 					launchImages_dir = startdir + self.builder.ds + "Images.xcassets" + self.builder.ds + "LaunchImage.launchimage" + self.builder.ds;
 
 					util.makeDirectories([launchImages_dir]);

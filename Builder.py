@@ -3263,6 +3263,50 @@ build:
 		cacheChanged = False;
 
 		optimisationlevel = "1";
+		#%ARK2D_DIR%
+
+		self.ldflags = [];
+
+		#print self.tag_replacements;
+		if (self.building_game):
+			print("Add external modules to project")
+			if "external_modules" in self.target_config:
+				for module in self.target_config['external_modules']:
+					print module
+
+					try:
+						moduleJsonFilename = module + self.ds + "module.json"
+						f = open(moduleJsonFilename, "r")
+						fcontents = f.read();
+						f.close();
+						fjson = json.loads(fcontents);
+
+						print  (fjson);
+						moduleObj = Module(self, module);
+						#moduleObj.platforms.html5.sources_relative = False;
+						fjson['platforms']['html5']['sources_relative'] = False;
+						moduleObj.initFromConfig(fjson);
+
+						print (moduleObj);
+
+						#self.include_dirs.extend( moduleObj.platforms.html5.header_search_paths );
+
+						self.src_files.extend(moduleObj.platforms.html5.sources);
+
+						#gypfiletargetcondition['ldflags'].extend( moduleObj.platforms.ios.library_search_paths );
+						self.ldflags.extend( moduleObj.platforms.html5.linker_flags );
+
+						self.preprocessor_definitions.extend( moduleObj.platforms.html5.preprocessor_definitions )
+
+
+
+						#ModuleUtil.addToGypConfig(moduleObj, 'html5', gypfiletarget, gypfiletargetcondition);
+						#ModuleUtil.addToIOSBuild(moduleObj, self);
+
+					except OSError as exc:
+						print("Module config was not valid.");
+						print(exc);
+						exit(0);
 
 		print("-------------------------");
 		print("Compiling Sources");
@@ -3345,11 +3389,15 @@ build:
 						compileStr += " -I " + includedir_actual + " ";
 
 
-			compileStr += " -o \"" + root_dir + self.ds + self.build_folder + self.ds + self.platform + self.ds + srcFileNew + "\"  \"" + srcFile + "\" ";
+			startFile = root_dir + self.ds + self.build_folder + self.ds + self.platform + self.ds;
+			if srcFileNew[0:3] == "../" or srcFileNew[0:1] == "/":
+				startFile = "";
+			compileStr += " -o \"" + startFile + srcFileNew + "\"  \"" + srcFile + "\" ";
 			#compileStr += " -lrt ";
 
 			if (not srcFile in cacheJSON or cacheJSON[srcFile]['date_modified'] < os.stat(srcFile).st_mtime):
 
+				print(root_dir);
 				print("Compiling " + srcFileNew);
 				print(compileStr);
 				returnval = os.system(compileStr);
@@ -3465,6 +3513,8 @@ build:
 			executableStr += " -O" +optimisationlevel + " ";
 			#executableStr += " --js-library " + self.ark2d_dir + self.ds + "lib/html5/mylibrary.js ";
 			executableStr += "-o " + root_dir + self.ds + "build/html5/game.html ";
+
+			print  self.src_files;
 			for srcFile in self.src_files:
 				srcFileIndex = srcFile.rfind('.');
 				srcFileExtension = srcFile[srcFileIndex+1:len(srcFile)];
@@ -3473,7 +3523,11 @@ build:
 				if srcFileExtension == 'rc':
 					continue;
 
-				executableStr += root_dir + "/" + self.build_folder + "/" + self.platform + "/" + srcFileNew + " ";
+				startFile = root_dir + self.ds + self.build_folder + self.ds + self.platform + self.ds;
+				if srcFileNew[0:3] == "../" or srcFileNew[0:1] == "/":
+					startFile = "";
+
+				executableStr += startFile + srcFileNew + " ";
 
 
 			if ("modules" not in self.target_config):

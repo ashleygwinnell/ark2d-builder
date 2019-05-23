@@ -12,6 +12,8 @@ import shutil
 from Util import *
 util = Util();
 
+from Module import *
+
 class MacBuild:
 
 	def __init__(self, builder):
@@ -410,6 +412,8 @@ class MacBuild:
 			#		includedir_actual = util.str_replace(includedir, [("%PREPRODUCTION_DIR%", config['osx']['game_preproduction_dir']), ("%ARK2D_DIR%", config['osx']['ark2d_dir'])]);
 			#		gypfiletargetcondition['include_dirs'].extend([includedir_actual]);
 			gypfiletargetcondition['include_dirs'].extend(self.builder.include_dirs);
+			gypfiletargetcondition['xcode_framework_dirs'] = [];
+			gypfiletarget['xcode_framework_dirs'] = []
 
 			# we can set any of these!
 			# https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/XcodeBuildSettingRef/1-Build_Setting_Reference/build_setting_ref.html
@@ -419,6 +423,7 @@ class MacBuild:
 			gypfiletargetcondition['xcode_settings']['GCC_PREPROCESSOR_DEFINITIONS'] = "ARK2D_MACINTOSH ARK2D_DESKTOP";
 			gypfiletargetcondition['xcode_settings']['GCC_OPTIMIZATION_LEVEL'] = "0";
 			gypfiletargetcondition['xcode_settings']['MACOSX_DEPLOYMENT_TARGET'] = "10.7";
+			gypfiletargetcondition['xcode_settings']['FRAMEWORK_SEARCH_PATHS'] = [];
 			gypfiletargetcondition['xcode_settings']['LD_RUNPATH_SEARCH_PATHS'] = "@executable_path/";
 
 			# force c++11!
@@ -462,12 +467,51 @@ class MacBuild:
 				# "iTunesArtwork@2x", 	#app-store-icon-retina
 			];
 
+
+			# add external modules
+			print("Add external modules to project")
+			if "external_modules" in self.builder.target_config:
+				for module in self.builder.target_config['external_modules']:
+					print module
+
+					try:
+						moduleJsonFilename = module + self.builder.ds + "module.json"
+						f = open(moduleJsonFilename, "r")
+						fcontents = f.read();
+						f.close();
+						fjson = json.loads(fcontents);
+
+						print  (fjson);
+						moduleObj = Module(self.builder, module);
+						moduleObj.initFromConfig(fjson);
+
+						print (moduleObj);
+
+						moduleObj.addToGypConfig("macos", gypfiletarget, gypfiletargetcondition);
+						#ModuleUtil.addToIOSBuild(moduleObj, self);
+
+					except OSError as exc:
+						print("Module config was not valid.");
+						print(exc);
+						exit(0);
+					except IOError as exc:
+						print("Module config was not valid.");
+						print(exc);
+						exit(0);
+
+
 			iphonecondition = [];
 			iphonecondition.extend(["OS == 'mac'"]);
 			iphonecondition.extend([gypfiletargetcondition]);
 			gypfiletarget['conditions'].extend([iphonecondition]);
 
 			gypfile['targets'].extend([gypfiletarget]);
+
+
+
+
+
+
 
 			print("saving gyp file: " + gypfilename);
 			f = open(gypfilename, "w")
